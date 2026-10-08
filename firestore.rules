@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function registering() { return signedIn() && request.auth.token.firebase.sign_in_provider == 'anonymous'; }
+    function profilePath() { return /databases/$(database)/documents/profiles/$(request.auth.uid); }
+
+    // A temporary authenticated signup reserves one ID. The same Firebase UID is
+    // then linked to ID/PIN credentials; there is no guest access to study data.
+    match /nameCounters/{stem} {
+      allow get: if registering();
+      allow list, delete: if false;
+      function allocation(serial) {
+        let profile = getAfter(profilePath()).data;
+        return registering() && stem.matches('^[A-Z]{2,24}$')
+          && !exists(profilePath())
+          && request.resource.data.keys().hasOnly(['serial', 'lastUid'])
+          && request.resource.data.serial is int
+          && request.resource.data.serial == serial
+          && serial > 0 && serial <= 999999999
+          && request.resource.data.lastUid == request.auth.uid
+          && profile.stem == stem && profile.serial == serial;
+      }
+      allow create: if allocation(1);
+      allow update: if allocation(resource.data.serial + 1);
+    }
+    match /profiles/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, update, delete: if false;
+      allow create: if registering() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['id','name','stem','serial'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 40
+        && request.resource.data.stem is string
+        && request.resource.data.stem.matches('^[A-Z]{2,24}$')
+        && request.resource.data.serial is int
+        && request.resource.data.serial > 0 && request.resource.data.serial <= 999999999
+        && request.resource.data.id == 'NEETX' + request.resource.data.stem
+          + (request.resource.data.serial < 10 ? '0' : '') + string(request.resource.data.serial)
+        && getAfter(/databases/$(database)/documents/nameCounters/$(request.resource.data.stem)).data.lastUid == uid
+        && getAfter(/databases/$(database)/documents/nameCounters/$(request.resource.data.stem)).data.serial == request.resource.data.serial;
+    }
+    match /trackers/{uid} {
+      function owner() {
+        return signedIn() && request.auth.uid == uid
+          && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      }
+      function valid() {
+        return request.resource.data.keys().hasOnly(['state','version','updatedAt'])
+          && request.resource.data.state is map
+          && request.resource.data.version is int
+          && request.resource.data.updatedAt == request.time;
+      }
+      allow get: if owner();
+      allow list, delete: if false;
+      allow create: if owner() && valid() && request.resource.data.version == 1;
+      allow update: if owner() && valid() && request.resource.data.version == resource.data.version + 1;
+    }
+  }
+}

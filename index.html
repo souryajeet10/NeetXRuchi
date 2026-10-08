@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NeetXRuchi · Your study space</title><meta name="description" content="Your personal NEET 2027 syllabus, revision and study planner."><meta name="theme-color" content="#fff5f9">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<section id="loginpage" aria-label="Sign in to your study tracker">
+<div class="login-story"><div class="eyebrow">✿ YOUR NEET 2027 STUDY SPACE</div><h1>A little progress.<br>A little closer.</h1><p>Your chapters, your plans, your big dream.<br>Keep them together in one lovely little space.</p><div class="login-flower" aria-hidden="true">✿</div><div class="login-note">♡ &nbsp; Show up for yourself, one chapter at a time.</div></div>
+<div class="login-card"><span class="login-badge">YOUR NEXT CHAPTER STARTS HERE</span><h2>Welcome back ♡</h2><p class="notice">Your study plans, all in one place. Sign in with your name and study ID.</p><div id="loginconnection" class="notice" role="status">Getting your study space ready…</div><div id="loginformslot"></div></div>
+</section>
+<main id="trackerpage" hidden>
+<header class="brandbar"><div class="brand"><span class="brand-flower" aria-hidden="true">✿</span> My study space <small>NEET 2027</small></div><div class="account-tools"><button class="btn" id="theme" aria-label="Toggle color theme">◐ Theme</button><button class="btn p" id="account">Sign in</button></div></header>
+<div class="herohead"><div><div class="eyebrow" id="greeting">Small steps. A stronger tomorrow.</div><h1>Your path to NEET.</h1><p class="sub">One chapter at a time. Make every study session count.</p></div><div class="leaf" aria-hidden="true">✿</div></div>
+
+<div id="workspace">
+<section class="top">
+  <div><div class="eyebrow" style="color:inherit;opacity:.7">Your overall progress</div><div class="big" id="pct">0%</div><div class="mute" id="cnt"></div><div class="bar"><i id="fill"></i></div></div>
+  <div class="exam"><b id="days">–</b>days to target<small>2 May 2027 · planning date</small></div>
+</section>
+<div class="nav"><button data-v="syl">Syllabus</button><button data-v="plan">Plan &amp; tests</button><button data-v="cal">Calendar</button></div>
+
+<div id="syl">
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <p class="step-caption">Track each chapter: study it, revise it, then practise previous-year questions.</p><div class="tools"><input type="search" id="search" placeholder="Search chapters…" aria-label="Search chapters in selected subject"><span id="subline"></span><button class="btn" id="gv"></button><label><input type="checkbox" id="hide"> Hide finished chapters</label></div>
+  <div id="list"></div>
+</div>
+
+<div id="plan" hidden>
+  <div id="todayp"></div>
+  <div id="targets"></div>
+  <div id="wkplan"></div>
+  <div class="card"><details><summary>Choose chapters for the week shown above</summary><div id="wpick"></div></details></div>
+  <div id="focus"></div>
+  <h2 style="margin-top:20px">Upcoming tests</h2>
+  <div id="tests"></div>
+  <div class="card">
+    <h2>Add a test</h2>
+    <div class="row" style="justify-content:flex-start">
+      <input type="text" id="tn" placeholder="Test name, e.g. Mock 1" aria-label="Test name">
+      <input type="date" id="td" aria-label="Test date">
+    </div>
+    <details><summary>Pick the test syllabus (<span id="pc">0</span> chapters)</summary><div id="picker"></div></details>
+    <button class="btn p" id="addt">Add test</button>
+  </div>
+</div>
+
+<div id="cal" hidden><div id="calmain"></div><div class="card"><details><summary id="dsum">Choose chapters for the selected day</summary><div id="dpick"></div></details></div></div>
+
+</div><footer class="foot"><span id="statusbar"><span id="syncmsg" role="status" aria-live="polite"></span> <button class="btn" id="retry" hidden>Retry save</button> <button class="btn" id="cloudreload" hidden>Load cloud version</button></span><span>Your pace. Your progress. Your future.</span><button id="reset">Reset current progress</button></footer>
+<dialog id="authdialog"><button class="close" data-close="authdialog" aria-label="Close">×</button><div class="eyebrow">Your personal study space</div><h2 id="authtitle">Your study account.</h2><p class="notice">Your name, study ID and progress, all together.</p><p id="authmsg" class="notice" role="status"></p>
+<form id="authform">
+<div class="auth-tabs"><button type="button" class="btn p" id="signinmode" aria-pressed="true">Sign in</button><button type="button" class="btn" id="signup" aria-pressed="false">Create account</button></div>
+<div id="namefield"><label for="fullname">Your name</label><input id="fullname" required autocomplete="given-name" maxlength="40" placeholder="Ruchi"><p class="notice" id="namehint" hidden>Your ID will look like <strong id="idpreview">NEETXRUCHI01</strong>. The number is assigned when you create your account.</p></div>
+<div id="idfield"><label for="accessid">Study ID</label><input id="accessid" type="text" autocomplete="username" autocapitalize="characters" spellcheck="false" required placeholder="NEETXRUCHI01"></div>
+<p class="notice">Keep your ID safe. Anyone with your ID can open your progress.</p>
+<button class="btn p auth-submit" type="submit" id="signin">Sign in</button>
+<section id="newidpanel" hidden><h3>Your study space is ready ♡</h3><label for="newid">Your study ID</label><input id="newid" readonly><p class="notice">Save this ID. Use it to open your progress on any device.</p><div class="row"><button class="btn" type="button" id="copyid">Copy ID</button><button class="btn p" type="button" id="entertracker">Open my tracker</button></div></section>
+</form>
+<div id="signedin" hidden><p class="account-email" id="accountemail"></p><p class="notice">Your syllabus, plans, tests and lecture progress belong to this account. Use your name and study ID to sign in again.</p><div class="row"><button class="btn" id="signout">Sign out</button></div></div></dialog>
+
+</main>
+<script type="module" src="/src/app.js"></script>
+</body>
+</html>
