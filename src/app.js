@@ -262,13 +262,12 @@ $('account').onclick=()=>{$('authmsg').textContent='';$('authdialog').showModal(
 let authBusy=false,creating=false,createdUser=null;
 function authControls(busy){authBusy=busy;for(const id of ['signin','signup','signinmode','accessid','fullname'])$(id).disabled=busy||!auth;}
 function mode(create){
-  if(authBusy)return;creating=create;$('namefield').hidden=!create;$('namehint').hidden=!create;$('idfield').hidden=create;
+  if(authBusy)return;creating=create;$('namefield').hidden=!create;$('idfield').hidden=create;
   $('fullname').required=create;$('accessid').required=!create;
   $('signin').textContent=create?'Create my account':'Sign in';
   $('signup').classList.toggle('p',create);$('signinmode').classList.toggle('p',!create);$('signup').setAttribute('aria-pressed',create);$('signinmode').setAttribute('aria-pressed',!create);$('authmsg').textContent='';
 }
 $('signup').onclick=()=>mode(true);$('signinmode').onclick=()=>mode(false);
-$('fullname').oninput=()=>{try{$('idpreview').textContent='NEETX'+nameParts($('fullname').value).stem+'01'}catch{$('idpreview').textContent='NEETXRUCHI01'}};
 async function reserveProfile(current,name){
   const {displayName,stem}=nameParts(name),profileRef=sdk.doc(db,'profiles',current.uid),counterRef=sdk.doc(db,'nameCounters',stem);
   return sdk.runTransaction(db,async tx=>{
