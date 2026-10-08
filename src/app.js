@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, runTransaction, serverTimestamp, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
-import { nameParts, credentialsFor, checkNameForId } from './identity.js';
+import { nameParts, credentialsFor } from './identity.js';
 
 const EXAM="2027-05-02";
 const S=[
@@ -262,8 +262,8 @@ $('account').onclick=()=>{$('authmsg').textContent='';$('authdialog').showModal(
 let authBusy=false,creating=false,createdUser=null;
 function authControls(busy){authBusy=busy;for(const id of ['signin','signup','signinmode','accessid','fullname'])$(id).disabled=busy||!auth;}
 function mode(create){
-  if(authBusy)return;creating=create;$('namefield').hidden=false;$('namehint').hidden=!create;$('idfield').hidden=create;
-  $('fullname').required=true;$('accessid').required=!create;
+  if(authBusy)return;creating=create;$('namefield').hidden=!create;$('namehint').hidden=!create;$('idfield').hidden=create;
+  $('fullname').required=create;$('accessid').required=!create;
   $('signin').textContent=create?'Create my account':'Sign in';
   $('signup').classList.toggle('p',create);$('signinmode').classList.toggle('p',!create);$('signup').setAttribute('aria-pressed',create);$('signinmode').setAttribute('aria-pressed',!create);$('authmsg').textContent='';
 }
@@ -281,7 +281,7 @@ async function reserveProfile(current,name){
 }
 async function authenticate(){
   if(authBusy||!auth||!$('authform').reportValidity())return;
-  try{nameParts($('fullname').value);if(!creating)checkNameForId($('fullname').value,$('accessid').value)}catch(e){$('authmsg').textContent=friendly(e);return}
+  try{if(creating)nameParts($('fullname').value)}catch(e){$('authmsg').textContent=friendly(e);return}
   authControls(true);$('authmsg').textContent=creating?'Creating your study space…':'Signing in…';
   try{
     if(creating){

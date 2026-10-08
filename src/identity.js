@@ -13,8 +13,3 @@ export function credentialsFor(input) {
   // Knowing/guessing an ID grants access; do not store sensitive information here.
   return { email: id.toLowerCase() + '@users.neetxruchi.invalid', password: id + '!nX'  };
 }
-export function checkNameForId(name, id) {
-  const { stem } = nameParts(name);
-  const match = String(id).trim().toUpperCase().match(/^NEETX([A-Z]{2,24})[0-9]{2,9}$/);
-  if (!match || match[1] !== stem) throw invalid('Your name should match the name in your study ID.');
-}

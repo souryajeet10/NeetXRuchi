@@ -10,7 +10,7 @@
 <body>
 <section id="loginpage" aria-label="Sign in to your study tracker">
 <div class="login-story"><div class="eyebrow">✿ YOUR NEET 2027 STUDY SPACE</div><h1>A little progress.<br>A little closer.</h1><p>Your chapters, your plans, your big dream.<br>Keep them together in one lovely little space.</p><div class="login-flower" aria-hidden="true">✿</div><div class="login-note">♡ &nbsp; Show up for yourself, one chapter at a time.</div></div>
-<div class="login-card"><span class="login-badge">YOUR NEXT CHAPTER STARTS HERE</span><h2>Welcome back ♡</h2><p class="notice">Your study plans, all in one place. Sign in with your name and study ID.</p><div id="loginconnection" class="notice" role="status">Getting your study space ready…</div><div id="loginformslot"></div></div>
+<div class="login-card"><span class="login-badge">YOUR NEXT CHAPTER STARTS HERE</span><h2>Welcome back ♡</h2><p class="notice">Your study plans, all in one place. Sign in with your study ID.</p><div id="loginconnection" class="notice" role="status">Getting your study space ready…</div><div id="loginformslot"></div></div>
 </section>
 <main id="trackerpage" hidden>
 <header class="brandbar"><div class="brand"><span class="brand-flower" aria-hidden="true">✿</span> My study space <small>NEET 2027</small></div><div class="account-tools"><button class="btn" id="theme" aria-label="Toggle color theme">◐ Theme</button><button class="btn p" id="account">Sign in</button></div></header>
@@ -54,13 +54,13 @@
 <dialog id="authdialog"><button class="close" data-close="authdialog" aria-label="Close">×</button><div class="eyebrow">Your personal study space</div><h2 id="authtitle">Your study account.</h2><p class="notice">Your name, study ID and progress, all together.</p><p id="authmsg" class="notice" role="status"></p>
 <form id="authform">
 <div class="auth-tabs"><button type="button" class="btn p" id="signinmode" aria-pressed="true">Sign in</button><button type="button" class="btn" id="signup" aria-pressed="false">Create account</button></div>
-<div id="namefield"><label for="fullname">Your name</label><input id="fullname" required autocomplete="given-name" maxlength="40" placeholder="Ruchi"><p class="notice" id="namehint" hidden>Your ID will look like <strong id="idpreview">NEETXRUCHI01</strong>. The number is assigned when you create your account.</p></div>
+<div id="namefield" hidden><label for="fullname">Your name</label><input id="fullname" autocomplete="given-name" maxlength="40" placeholder="Ruchi"><p class="notice" id="namehint" hidden>Your ID will look like <strong id="idpreview">NEETXRUCHI01</strong>. The number is assigned when you create your account.</p></div>
 <div id="idfield"><label for="accessid">Study ID</label><input id="accessid" type="text" autocomplete="username" autocapitalize="characters" spellcheck="false" required placeholder="NEETXRUCHI01"></div>
 <p class="notice">Keep your ID safe. Anyone with your ID can open your progress.</p>
 <button class="btn p auth-submit" type="submit" id="signin">Sign in</button>
 <section id="newidpanel" hidden><h3>Your study space is ready ♡</h3><label for="newid">Your study ID</label><input id="newid" readonly><p class="notice">Save this ID. Use it to open your progress on any device.</p><div class="row"><button class="btn" type="button" id="copyid">Copy ID</button><button class="btn p" type="button" id="entertracker">Open my tracker</button></div></section>
 </form>
-<div id="signedin" hidden><p class="account-email" id="accountemail"></p><p class="notice">Your syllabus, plans, tests and lecture progress belong to this account. Use your name and study ID to sign in again.</p><div class="row"><button class="btn" id="signout">Sign out</button></div></div></dialog>
+<div id="signedin" hidden><p class="account-email" id="accountemail"></p><p class="notice">Your syllabus, plans, tests and lecture progress belong to this account. Use your study ID to sign in again.</p><div class="row"><button class="btn" id="signout">Sign out</button></div></div></dialog>
 
 </main>
 <script type="module" src="/src/app.js"></script>

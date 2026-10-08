@@ -3,7 +3,7 @@
 A pink NEET study tracker. **Vercel hosts the website; Firebase stores accounts and progress.** No custom server, service-account keys, or environment variables are needed.
 
 - Sign up with **your name only**. Firebase assigns IDs such as `NEETXRUCHI01`, `NEETXRUCHI02`.
-- Sign in with **name and ID**. ID matching ignores case; names with the same normalized spelling share a serial counter.
+- Sign in with **ID only**. ID matching ignores case; names with the same normalized spelling share a serial counter.
 - Track studied/revised/PYQs, lectures, tests, daily plans and weekly targets. Includes responsive layouts and dark mode.
 - No guest entry or connection settings in the user interface.
 
@@ -19,7 +19,7 @@ The first registration for a normalized name gets `01`; subsequent registrations
 
 ## Account behavior
 
-This is deliberately **ID-only access**, with no PIN or password entered by the user. Anyone who knows or guesses an ID can access that account. Sequential IDs are predictable, so this is suitable only for non-sensitive study progress. The name field is a convenience check, not a security factor.
+This is deliberately **ID-only access**, with no PIN or password entered by the user. Anyone who knows or guesses an ID can access that account. Sequential IDs are predictable, so this is suitable only for non-sensitive study progress. Your name is requested only at signup.
 
 Firebase Authentication uses an internal non-deliverable email alias and deterministic credential derived from the ID. This retains per-account storage and sessions, but it does not add secrecy beyond the ID. Users do not supply an email.
 
