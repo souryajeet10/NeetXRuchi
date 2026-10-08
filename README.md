@@ -1,6 +1,10 @@
 # NeetXRuchi
 
-A pink NEET study tracker. **Vercel hosts the website; Firebase stores accounts and progress.** No custom server, service-account keys, or environment variables are needed.
+**Made for Abhiruchi only ♡**
+
+A personal pink NEET study tracker created for Abhiruchi's preparation, chapter progress and daily study plans. **Vercel hosts the website; Firebase stores accounts and progress.** No custom server, service-account keys, or environment variables are needed.
+
+This dedication describes the intended user; it does not restrict website access to Abhiruchi automatically.
 
 - Sign up with **your name only**. Firebase assigns IDs such as `NEETXRUCHI01`, `NEETXRUCHI02`.
 - Sign in with **ID only**. ID matching ignores case; names with the same normalized spelling share a serial counter.
