@@ -104,7 +104,7 @@ function renderPlan(){
     const d=dleft(t.date),w=Math.max(1,Math.ceil(d/7)),ck=t.chk||{},pd=t.ch.filter(id=>!ck[id]),
     ready=Math.round((t.ch.length-pd.length)/Math.max(1,t.ch.length)*100),nw=Math.ceil(pd.length/w);
     return `<div class="card"><div class="row"><b>${esc(t.name)}</b><span class="mute">${fmt(t.date)} · ${d} days</span></div>
-    <div class="row mute" style="margin-top:4px"><span>${t.ch.length} chapters · ${ready}% ready</span><span class="tag ${pd.length?(nw>st.wk?"bad":""):"good"}">${pd.length?`${pd.length} to do · ${nw}/week`:"All done"}</span></div>${bar(ready,100)}
+    <div class="row mute" style="margin-top:4px"><span>${t.ch.length} chapters · ${ready}% ready</span><span class="tag ${pd.length?(nw>st.wk?"bad":""):"good"}">${pd.length?`${pd.length} ${pd.length===1?'chapter':'chapters'} left · Aim for ${nw} ${nw===1?'chapter':'chapters'} per week`:"All chapters ready"}</span></div>${bar(ready,100)}
     <details data-ot="${t.id}" ${openT.has(t.id)?"open":""}><summary>Test checklist (${t.ch.length-pd.length} of ${t.ch.length} ready)</summary>${t.ch.map(id=>`<label class="f" style="--c:${S[BY[id].s].c};cursor:pointer"><i></i><input type="checkbox" data-tc="${t.id}|${id.replace(/"/g,"&quot;")}" ${ck[id]?"checked":""}><span>${BY[id].c}${chip(id)}</span><span class="mute" style="font-size:12px;flex:none">tracker ${ticks(id)}/3</span></label>`).join("")}</details>
     <div style="margin-top:8px"><button class="btn" data-del="${t.id}">Delete test</button></div></div>`}).join(""):`<div class="card empty">No upcoming tests. Add one below to match its syllabus with your plan.</div>`;
 }
