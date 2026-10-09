@@ -1,5 +1,5 @@
 import { ALL, BY, LECTURES, migrateProgress } from './syllabus.js';
-export const fresh = () => ({ done: {}, dates: {}, tab: 0, hide: false, grid: true, view: "syl", wk: 5, mo: 20, tests: [], plan: {}, day: {}, lec: Object.fromEntries(ALL.map(a => [a.id, { n: 0, d: [] }])), syllabusVersion: 2, legacyProgress: {} });
+export const fresh = () => ({ done: {}, dates: {}, tab: 0, hide: false, grid: true, view: "syl", wk: 5, mo: 20, tests: [], plan: {}, day: {}, dayDone: {}, lec: Object.fromEntries(ALL.map(a => [a.id, { n: 0, d: [] }])), syllabusVersion: 2, legacyProgress: {} });
 
 export function normalize(x) {
   if (!x || typeof x !== "object" || Array.isArray(x)) throw Error("Invalid tracker data");
@@ -16,7 +16,7 @@ export function normalize(x) {
       n.lec[a.id] = { n: isCodedDefault ? 0 : count, d: done };
     }
   }
-  for (const field of ['plan', 'day']) for (const [d, ids] of Object.entries(x[field] || {})) if (/^\d{4}-\d{2}-\d{2}$/.test(d) && Array.isArray(ids)) n[field][d] = [...new Set(ids.filter(id => Object.hasOwn(BY, id)))];
+  for (const field of ['plan', 'day', 'dayDone']) for (const [d, ids] of Object.entries(x[field] || {})) if (/^\d{4}-\d{2}-\d{2}$/.test(d) && Array.isArray(ids)) n[field][d] = [...new Set(ids.filter(id => Object.hasOwn(BY, id)))];
   n.tests = (Array.isArray(x.tests) ? x.tests : []).filter(t => t && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && /^[a-zA-Z0-9_-]+$/.test(String(t.id))).map(t => ({ id: String(t.id), name: String(t.name || 'Test').slice(0, 160), date: t.date, ch: [...new Set((Array.isArray(t.ch) ? t.ch : []).filter(id => Object.hasOwn(BY, id)))], chk: Object.fromEntries(Object.entries(t.chk || {}).filter(([id, v]) => Object.hasOwn(BY, id) && v === true)) }));
   n.tab = Number.isInteger(x.tab) && x.tab >= 0 && x.tab < 4 ? x.tab : 0; n.view = ['syl', 'plan', 'cal'].includes(x.view) ? x.view : 'syl'; n.hide = !!x.hide; n.grid = !!x.grid;
   for (const k of ['wk', 'mo']) n[k] = Number.isFinite(x[k]) ? Math.max(0, Math.min(1000, Math.floor(x[k]))) : n[k]; n.legacyProgress = x.legacyProgress && typeof x.legacyProgress === 'object' ? structuredClone(x.legacyProgress) : {}; return n;

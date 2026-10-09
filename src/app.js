@@ -74,13 +74,17 @@ function renderSyl(pcts){
 }
 function dlist(a,d){
   const old=d<iso(today());
-  return a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${studied(id)?`<span class="tag good" style="flex:none">Studied</span>`:`${old?`<span class="tag bad" style="flex:none">Missed</span><button class="btn" data-mv="${d}|${id}">Move to today</button>`:""}<button class="btn" data-k="${id}|0">Mark studied</button>`}<button class="btn" data-rmd="${d}|${id}" aria-label="Remove">&times;</button></div>`).join(""):`<div class="mute">Nothing planned.</div>`;
+  return a.length?a.map(id=>{
+    const isDone=(st.dayDone[d]||[]).includes(id);
+    return `<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${isDone?`<span class="tag good" style="flex:none">Studied</span><button class="btn" data-unmarkdone="${d}|${id}">Undo</button>`:`${old?`<span class="tag bad" style="flex:none">Missed</span><button class="btn" data-mv="${d}|${id}">Move to today</button>`:""}<button class="btn" data-markdone="${d}|${id}">Mark studied</button>`}<button class="btn" data-rmd="${d}|${id}" aria-label="Remove">&times;</button></div>`;
+  }).join(""):`<div class="mute">Nothing planned.</div>`;
 }
 function renderPlan(){
-  const tk=iso(today()),carry=Object.keys(st.day).filter(d=>d<tk).sort().map(d=>[d,st.day[d].filter(id=>!studied(id))]).filter(x=>x[1].length);
+  const tk=iso(today()),carry=Object.keys(st.day).filter(d=>d<tk).sort().map(d=>[d,st.day[d].filter(id=>!(st.dayDone[d]||[]).includes(id))]).filter(x=>x[1].length);
   $("todayp").innerHTML=`<div class="card"><h2>Today, ${fmt(tk)}</h2>${dlist(st.day[tk]||[],tk)}${carry.map(([d,l])=>`<div class="grp">Not finished from ${fmt(d)}</div>${dlist(l,d)}`).join("")}<p class="mute" style="margin:10px 0 0;font-size:13px">Plan chapters for any day in the Calendar tab.</p></div>`;
   const ws=weekStart(),ms=iso(today()).slice(0,7);
-  const wd=ALL.filter(a=>st.dates[a.id]>=ws).length,md=ALL.filter(a=>(st.dates[a.id]||"").startsWith(ms)).length;
+  const wd=new Set(Object.keys(st.dayDone||{}).filter(d=>d>=ws).flatMap(d=>st.dayDone[d]||[])).size;
+  const md=new Set(Object.keys(st.dayDone||{}).filter(d=>d.startsWith(ms)).flatMap(d=>st.dayDone[d]||[])).size;
   const pend=ALL.filter(a=>!studied(a.id)),wl=Math.max(1,Math.ceil(dleft(EXAM)/7));
   const need=Math.ceil(pend.length/wl);
   const bar=(d,t)=>`<div class="bar"><i style="width:${Math.min(100,Math.round(d/Math.max(1,t)*100))}%"></i></div>`;
@@ -110,24 +114,24 @@ function renderPlan(){
 function renderCal(){
   const y=cm.getFullYear(),m=cm.getMonth(),off=(new Date(y,m,1).getDay()+6)%7,n=new Date(y,m+1,0).getDate(),tk=iso(today());
   if(!cs)cs=tk;
-  const by={};ALL.forEach(a=>{const d=st.dates[a.id];if(d)(by[d]=by[d]||[]).push(a.id)});
   let c=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<div class="h">${d}</div>`).join("")+"<div></div>".repeat(off);
   for(let d=1;d<=n;d++){
-    const dt=new Date(y,m,d),k=iso(dt),pn=(st.plan[wsOf(dt)]||[]).length,tn=st.tests.filter(t=>t.date==k).length,sn=(by[k]||[]).length,dn=(st.day[k]||[]).length;
+    const dt=new Date(y,m,d),k=iso(dt),pn=(st.plan[wsOf(dt)]||[]).length,tn=st.tests.filter(t=>t.date==k).length,sn=(st.dayDone[k]||[]).length,dn=(st.day[k]||[]).length;
     c+=`<button class="cd${pn?" pl":""}${k==tk?" td":""}${k==EXAM?" ex":""}${k==cs?" sel":""}" data-cd="${k}"><b>${d}</b>${k==EXAM?'<span class="m e">NEET</span>':""}${tn?`<span class="m t">Test${tn>1?" "+tn:""}</span>`:""}${sn?`<span class="m s">&#10003;${sn}</span>`:""}${dn?`<span class="m d">D${dn}</span>`:""}${pn&&dt.getDay()==1?`<span class="m p">P${pn}</span>`:""}</button>`;
   }
-  const dd=new Date(cs+"T00:00:00"),ts=st.tests.filter(t=>t.date==cs),sd=by[cs]||[],wp=st.plan[wsOf(dd)]||[];
+  const dd=new Date(cs+"T00:00:00"),ts=st.tests.filter(t=>t.date==cs),sd=st.dayDone[cs]||[],wp=st.plan[wsOf(dd)]||[];
   const dp=st.day[cs]||[];
   pickers.dpick.setSelected(dp);
   $("dsum").textContent="Choose chapters for "+fmt(cs);
-  const list=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${studied(id)?`<span class="tag good" style="flex:none">Studied</span>`:""}</div>`).join(""):`<div class="mute">Nothing yet.</div>`;
+  const listStudied=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span><span class="tag good" style="flex:none">Studied</span><button class="btn" data-unmarkdone="${cs}|${id}" aria-label="Remove">&times;</button></div>`).join(""):`<div class="mute">Nothing yet.</div>`;
+  const list=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span></div>`).join(""):`<div class="mute">Nothing yet.</div>`;
   $("calmain").innerHTML=`<div class="card"><div class="row" style="margin-bottom:10px"><button class="btn" data-cm="-1">&lsaquo; Prev</button><b>${cm.toLocaleDateString("en-IN",{month:"long",year:"numeric"})}</b><button class="btn" data-cm="1">Next &rsaquo;</button></div>
   <div class="cal">${c}</div><p class="mute" style="margin:10px 0 0;font-size:12px">Orange D = chapters planned for that day. Blue tint and P = planned for that week. &#10003; = chapters studied that day. Tap a day for details.</p></div>
   <div class="card"><h2>${dd.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</h2>
   ${cs==EXAM?'<p><b>NEET 2027 exam day.</b></p>':dleft(cs)>=0?`<p class="mute">${dleft(cs)} days from today</p>`:""}
   ${ts.map(t=>`<div class="grp" style="margin-top:4px">Test: ${esc(t.name)}</div>${list(t.ch)}`).join("")}
   <div class="grp">Planned for this day</div>${dlist(dp,cs)}
-  <div class="grp">Studied this day</div>${list(sd)}
+  <div class="grp">Studied this day</div>${listStudied(sd)}
   <div class="grp">Planned for this week</div>${list(wp)}</div>`;
 }
 function buildPicker(){
@@ -145,10 +149,10 @@ document.addEventListener("click",e=>{
   const classFilter=e.target.closest('[data-syllabus-class]');if(classFilter){syllabusClass=classFilter.dataset.syllabusClass;render()}
   const group=e.target.closest('[data-syllabus-group]');if(group){syllabusGroup=group.dataset.syllabusGroup;render()}
   const c=e.target.closest("[data-k]"),t=e.target.closest(".tab"),n=e.target.closest(".nav button"),d=e.target.closest("[data-del]");
-  if(c){const k=c.dataset.k,id=k.slice(0,k.lastIndexOf("|")),i=k.slice(-1);
-    st.done[k]=!st.done[k];
-    if(i=="0"){if(st.done[k])st.dates[id]=iso(today());else delete st.dates[id]}
-    save();render()}
+  if(c){const k=c.dataset.k;st.done[k]=!st.done[k];save();render()}
+  const md=e.target.closest("[data-markdone]"),umd=e.target.closest("[data-unmarkdone]");
+  if(md){const v=md.dataset.markdone,i=v.indexOf("|"),date=v.slice(0,i),id=v.slice(i+1);st.dayDone[date]=[...new Set([...(st.dayDone[date]||[]),id])];save();render()}
+  if(umd){const v=umd.dataset.unmarkdone,i=v.indexOf("|"),date=v.slice(0,i),id=v.slice(i+1);st.dayDone[date]=(st.dayDone[date]||[]).filter(x=>x!=id);save();render()}
   const a=e.target.closest("[data-add]"),r=e.target.closest("[data-rm]"),w=e.target.closest("[data-wk]"),cmb=e.target.closest("[data-cm]"),cd=e.target.closest("[data-cd]");
   if(a){const k=wkISO(0);st.plan[k]=[...new Set([...(st.plan[k]||[]),a.dataset.add])];save();render()}
   if(r){const k=wkISO(pw);st.plan[k]=(st.plan[k]||[]).filter(x=>x!=r.dataset.rm);save();render()}
@@ -184,7 +188,7 @@ $("addt").onclick=()=>{
 };
 $("gv").onclick=()=>{st.grid=!st.grid;save();render()};
 $("hide").checked=st.hide;$("hide").onchange=()=>{st.hide=$("hide").checked;save();render()};
-$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.lec=fresh().lec;st.legacyProgress={};save();render()}};
+$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.dayDone={};st.lec=fresh().lec;st.legacyProgress={};save();render()}};
 buildPicker();render();
 // Paste your PUBLIC Firebase web config here before sharing/hosting this file.
 const FIREBASE_CONFIG = {

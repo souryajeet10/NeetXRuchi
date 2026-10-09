@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { S, ALL, BY, LECTURES, LEGACY_MAP } from '../src/syllabus.js';
 import { fresh, normalize } from '../src/state.js';
 
-test('planners have 89 distinct chapters, 655 lectures, with no revision sessions',()=>{
+test('planners have 89 distinct chapters, 655 lectures, with no revision sessions',()=>{ 
   assert.equal(ALL.length,89);assert.equal(new Set(ALL.map(a=>a.id)).size,89);
   assert.deepEqual(S.map((_,i)=>ALL.filter(a=>a.s===i).length),[31,26,17,15]);
   assert.equal(Object.values(LECTURES).reduce((a,b)=>a+b,0),655);
@@ -30,3 +30,10 @@ test('explicit new completion state takes precedence and custom totals survive r
   const x={done:{'Physics|Kinematics|0':true,'Physics|Motion in a Straight Line|0':false},lec:{'Physics|Units and Measurements':{n:0,d:[]}}};
   const n=normalize(x);assert(!n.done['Physics|Motion in a Straight Line|0']);assert(n.done['Physics|Motion in a Plane|0']);assert.equal(n.lec['Physics|Units and Measurements'].n,0);assert.deepEqual(normalize(n),n);
 });
+test('dayDone normalizes correctly and remains independent of syllabus done',()=>{
+  const x={done:{'Physics|Units and Measurements|0':true},dayDone:{'2026-10-09':['Physics|Units and Measurements']}};
+  const n=normalize(x);
+  assert.deepEqual(n.dayDone['2026-10-09'],['Physics|Units and Measurements']);
+  assert.deepEqual(normalize(n),n);
+});
+
