@@ -69,7 +69,7 @@ function renderSyl(pcts){
     if(rows)h+=`<div class="grp">${g}</div><div class="${st.grid?"cg":""}">${rows}</div>`;
   }
   $("list").innerHTML=h||`<div class="empty">${query?"No chapters match your search.":"Every chapter in "+s.n+" is finished. Nice work."}</div>`;
-  $("gv").textContent=st.grid?"List view":"Grid view";
+  $("gv").textContent=st.grid?"≡ List view":"⊞ Grid view";
   const[d,t]=sub(st.tab);$("subline").textContent=`${s.n}: ${d} of ${t} ticks`;
 }
 function dlist(a,d){
