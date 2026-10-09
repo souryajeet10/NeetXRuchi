@@ -36,4 +36,13 @@ test('dayDone normalizes correctly and remains independent of syllabus done',()=
   assert.deepEqual(n.dayDone['2026-10-09'],['Physics|Units and Measurements']);
   assert.deepEqual(normalize(n),n);
 });
+test('due dates and custom todos normalize and persist correctly',()=>{
+  const x={due:{'Physics|Units and Measurements':'2027-01-15'},todos:[{id:'t1',text:'Solve 50 PYQs',done:true}]};
+  const n=normalize(x);
+  assert.equal(n.due['Physics|Units and Measurements'],'2027-01-15');
+  assert.equal(n.todos[0].text,'Solve 50 PYQs');
+  assert.equal(n.todos[0].done,true);
+  assert.deepEqual(normalize(n),n);
+});
+
 

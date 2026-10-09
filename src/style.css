@@ -143,3 +143,62 @@ body{background:radial-gradient(ellipse at 95% 0%,#f9dce955,transparent 45%),var
 @keyframes loadPop{from{transform:scale(0.93) translateY(8px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 @keyframes loadBar{0%{left:-45%;width:30%}50%{left:35%;width:50%}100%{left:100%;width:35%}}
 
+/* Tab switch animation and To-Do styling */
+#syl:not([hidden]), #plan:not([hidden]), #cal:not([hidden]), #todo:not([hidden]) {
+  animation: tabSwitchIn .28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes tabSwitchIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.nav button {
+  transition: color .2s ease, border-color .2s ease, transform .15s ease;
+}
+.nav button:hover {
+  color: var(--ink);
+}
+.todo-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.todo-due-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0 16px;
+}
+.todo-due-filters button {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--mute);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.todo-due-filters button[aria-pressed=true] {
+  color: #fff;
+  background: var(--ok);
+  border-color: var(--ok);
+}
+.ch .due-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+

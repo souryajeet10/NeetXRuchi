@@ -41,8 +41,8 @@ function render(){
   $("cnt").textContent=`${fin} of ${ALL.length} chapters fully done`;
   $("days").textContent=Math.max(0,dleft(EXAM));
   document.querySelectorAll(".nav button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v==st.view));
-  $("syl").hidden=st.view!="syl";$("plan").hidden=st.view!="plan";$("cal").hidden=st.view!="cal";
-  if(st.view=="syl")renderSyl(pcts);else if(st.view=="plan")renderPlan();else renderCal();
+  $("syl").hidden=st.view!="syl";$("plan").hidden=st.view!="plan";$("cal").hidden=st.view!="cal";$("todo").hidden=st.view!="todo";
+  if(st.view=="syl")renderSyl(pcts);else if(st.view=="plan")renderPlan();else if(st.view=="cal")renderCal();else renderTodo();
 }
 function lecRow(id){
   const L=st.lec[id]||{n:0,d:[]},op=openL.has(id);
@@ -59,12 +59,22 @@ function renderSyl(pcts){
     if(syllabusGroup!=='all'&&g!==syllabusGroup)continue;
     let rows="";
     list.forEach(c=>{
-      const id=s.n+"|"+c,full=ticks(id)==3;
+      const id=s.n+"|"+c,full=ticks(id)==3,isDone=studied(id);
       if(syllabusClass!=='all'&&!BY[id].classes.includes(syllabusClass))return;
       if(st.hide&&full)return;
       if(query&&!c.toLowerCase().includes(query))return;
       const t=ut.find(t=>t.ch.includes(id));
-      rows+=`<div class="ch${full?" full":""}" style="--c:${s.c}"><span class="nm">${c}${t&&!full?`<small>${esc(t.name)} on ${fmt(t.date)}</small>`:""}</span><span class="chips">${STEPS.map((l,k)=>`<button class="chip" aria-pressed="${!!st.done[id+"|"+k]}" data-k="${id}|${k}">${l}</button>`).join("")}</span>${lecRow(id)}<div class="bar mini"><i style="width:${ticks(id)*100/3}%"></i></div></div>`;
+      let dueHtml="";
+      if(!isDone){
+        const dd=st.due&&st.due[id];
+        if(dd){
+          const dl=dleft(dd),ov=dl<0;
+          dueHtml=`<span class="tag ${ov?'bad':'good'}" style="font-size:11px" title="Target completion date">🎯 ${fmt(dd)}${ov?' (overdue)':''}</span><button class="btn" type="button" data-setdue="${id}" title="Edit target date" style="padding:2px 7px;font-size:11px">✎</button>`;
+        }else{
+          dueHtml=`<span class="tag bad" style="font-size:10px" title="No target date assigned">Missing target date</span><button class="btn" type="button" data-setdue="${id}" style="padding:2px 8px;font-size:11px">+ Target date</button>`;
+        }
+      }
+      rows+=`<div class="ch${full?" full":""}" style="--c:${s.c}"><span class="nm">${c}${dueHtml?`<span class="due-slot">${dueHtml}</span>`:""}${t&&!full?`<small>${esc(t.name)} on ${fmt(t.date)}</small>`:""}</span><span class="chips">${STEPS.map((l,k)=>`<button class="chip" aria-pressed="${!!st.done[id+"|"+k]}" data-k="${id}|${k}">${l}</button>`).join("")}</span>${lecRow(id)}<div class="bar mini"><i style="width:${ticks(id)*100/3}%"></i></div></div>`;
     });
     if(rows)h+=`<div class="grp">${g}</div><div class="${st.grid?"cg":""}">${rows}</div>`;
   }
@@ -134,15 +144,63 @@ function renderCal(){
   <div class="grp">Studied this day</div>${listStudied(sd,cs)}
   <div class="grp">Planned for this week</div>${list(wp)}</div>`;
 }
+let todoDueFilter='missing',activeDueId=null;
+function renderTodo(){
+  const tk=iso(today()),planned=st.day[tk]||[],studiedToday=st.dayDone[tk]||[];
+  const total=new Set([...planned,...studiedToday]).size,done=studiedToday.length;
+  const pct=total?Math.min(100,Math.round(done/total*100)):0;
+  const uncompleted=ALL.filter(a=>!studied(a.id));
+  const missingDue=uncompleted.filter(a=>!(st.due&&st.due[a.id]));
+  const overdueDue=uncompleted.filter(a=>st.due&&st.due[a.id]&&dleft(st.due[a.id])<0).sort((a,b)=>st.due[a.id].localeCompare(st.due[b.id]));
+  const upcomingDue=uncompleted.filter(a=>st.due&&st.due[a.id]&&dleft(st.due[a.id])>=0).sort((a,b)=>st.due[a.id].localeCompare(st.due[b.id]));
+  let dueListHtml="";
+  if(todoDueFilter==='missing'){
+    dueListHtml=missingDue.length?missingDue.slice(0,30).map(a=>`
+      <div class="f" style="--c:${S[BY[a.id].s].c}"><i></i><span>${BY[a.id].c}<span class="mute"> · ${S[BY[a.id].s].n}</span></span><span class="tag bad" style="font-size:11px">Missing target date</span><button class="btn p" data-setdue="${a.id}" style="font-size:11px;padding:5px 11px">+ Set target date</button></div>
+    `).join("")+(missingDue.length>30?`<p class="mute" style="margin-top:10px;font-size:12px">Showing 30 of ${missingDue.length} chapters missing target dates.</p>`:""):`<div class="mute">Every uncompleted chapter has a target date! Great planning. ♡</div>`;
+  }else if(todoDueFilter==='overdue'){
+    dueListHtml=overdueDue.length?overdueDue.map(a=>{
+      const d=Math.abs(dleft(st.due[a.id]));
+      return `<div class="f" style="--c:${S[BY[a.id].s].c}"><i></i><span>${BY[a.id].c}<span class="mute"> · ${S[BY[a.id].s].n}</span></span><span class="tag bad" style="font-size:11px">Overdue by ${d} ${d===1?'day':'days'} (${fmt(st.due[a.id])})</span><button class="btn" data-setdue="${a.id}" style="font-size:11px;padding:5px 10px">Reschedule</button><button class="btn" data-markdone="${tk}|${a.id}" style="font-size:11px;padding:5px 10px">Mark studied</button></div>`;
+    }).join(""):`<div class="mute">No overdue chapters. You are on track! ♡</div>`;
+  }else{
+    dueListHtml=upcomingDue.length?upcomingDue.map(a=>{
+      const d=dleft(st.due[a.id]);
+      return `<div class="f" style="--c:${S[BY[a.id].s].c}"><i></i><span>${BY[a.id].c}<span class="mute"> · ${S[BY[a.id].s].n}</span></span><span class="tag good" style="font-size:11px">Target: ${fmt(st.due[a.id])}${d===0?' (Today!)':` (${d}d left)`}</span><button class="btn" data-setdue="${a.id}" style="font-size:11px;padding:5px 10px">Change</button></div>`;
+    }).join(""):`<div class="mute">No upcoming target dates assigned yet. Assign dates from the Missing tab.</div>`;
+  }
+  const customTodos=st.todos||[],customDone=customTodos.filter(t=>t.done).length;
+  $("todomain").innerHTML=`
+    <div class="card">
+      <div class="row"><div><h2>Today’s chapter targets</h2><div class="mute">${fmt(tk)} · Daily focus</div></div><div style="text-align:right"><b>${done} of ${total}</b><div class="mute" style="font-size:12px">${pct}% complete</div></div></div>
+      <div class="bar" style="margin:10px 0 16px"><i style="width:${pct}%"></i></div>
+      <div class="grp">Planned for today</div>${dlist(planned,tk)}
+      <div class="grp" style="margin-top:16px">Studied today</div>${listStudied(studiedToday,tk)}
+    </div>
+    <div class="card">
+      <div class="row"><h2>Daily to-do tasks</h2><span class="mute" style="font-size:12px">${customDone} of ${customTodos.length} tasks done</span></div>
+      <form id="customtodoform" style="display:flex;gap:8px;margin:12px 0 16px"><input type="text" id="customtodotext" placeholder="Add a custom task (e.g. solve 40 MCQs, revise notes…)" style="flex:1" required maxlength="180"><button class="btn p" type="submit">+ Add task</button></form>
+      ${customTodos.length?customTodos.map(t=>`<div class="f"><label style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer"><input type="checkbox" data-todotoggle="${t.id}" ${t.done?"checked":""}><span style="${t.done?'text-decoration:line-through;opacity:.6':''}">${esc(t.text)}</span></label><button class="btn" data-tododel="${t.id}" aria-label="Delete">&times;</button></div>`).join(""):`<div class="mute">No custom tasks yet. Add one above!</div>`}
+    </div>
+    <div class="card">
+      <h2>Chapter target completion dates</h2>
+      <p class="mute" style="font-size:13px;margin:4px 0 12px">Assign target dates to uncompleted chapters. Completed chapters are automatically ignored.</p>
+      <div class="todo-due-filters"><button type="button" data-todofilter="missing" aria-pressed="${todoDueFilter==='missing'}">Missing target date (${missingDue.length})</button><button type="button" data-todofilter="upcoming" aria-pressed="${todoDueFilter==='upcoming'}">Upcoming targets (${upcomingDue.length})</button><button type="button" data-todofilter="overdue" aria-pressed="${todoDueFilter==='overdue'}">Overdue (${overdueDue.length})</button></div>
+      ${dueListHtml}
+    </div>`;
+  if(pickers.tpick){pickers.tpick.setSelected(planned);$("tsum").textContent="Add chapters to today’s study plan ("+fmt(tk)+")"}
+}
 function buildPicker(){
   pickers.wpick=createChapterPicker($('wpick'),'Plan your week');
   pickers.picker=createChapterPicker($('picker'),'Build your test syllabus');
   pickers.dpick=createChapterPicker($('dpick'),'Plan your day');
+  pickers.tpick=createChapterPicker($('tpick'),'Plan today’s chapters');
 }
 document.addEventListener('chapterselection',e=>{
   const id=e.target.id,ids=e.detail.ids;
   if(id==='wpick'){st.plan[wkISO(pw)]=ids;save();render()}
   if(id==='dpick'){st.day[cs]=ids;save();render()}
+  if(id==='tpick'){st.day[iso(today())]=ids;save();render()}
   if(id==='picker')$('pc').textContent=ids.length;
 });
 document.addEventListener("click",e=>{
@@ -153,6 +211,14 @@ document.addEventListener("click",e=>{
   const md=e.target.closest("[data-markdone]"),umd=e.target.closest("[data-unmarkdone]");
   if(md){const v=md.dataset.markdone,i=v.indexOf("|"),date=v.slice(0,i),id=v.slice(i+1);st.dayDone[date]=[...new Set([...(st.dayDone[date]||[]),id])];save();render()}
   if(umd){const v=umd.dataset.unmarkdone,i=v.indexOf("|"),date=v.slice(0,i),id=v.slice(i+1);st.dayDone[date]=(st.dayDone[date]||[]).filter(x=>x!=id);save();render()}
+  const sdue=e.target.closest("[data-setdue]");
+  if(sdue){activeDueId=sdue.dataset.setdue;$("duename").textContent=BY[activeDueId].c+" · "+S[BY[activeDueId].s].n;$("dueinput").value=st.due[activeDueId]||iso(today());$("duedialog").showModal();return}
+  const tdf=e.target.closest("[data-todofilter]");
+  if(tdf){todoDueFilter=tdf.dataset.todofilter;render();return}
+  const tdt=e.target.closest("[data-todotoggle]");
+  if(tdt){const item=(st.todos||[]).find(x=>x.id===tdt.dataset.todotoggle);if(item){item.done=!item.done;save();render();}return}
+  const tdd=e.target.closest("[data-tododel]");
+  if(tdd){st.todos=(st.todos||[]).filter(x=>x.id!==tdd.dataset.tododel);save();render();return}
   const a=e.target.closest("[data-add]"),r=e.target.closest("[data-rm]"),w=e.target.closest("[data-wk]"),cmb=e.target.closest("[data-cm]"),cd=e.target.closest("[data-cd]");
   if(a){const k=wkISO(0);st.plan[k]=[...new Set([...(st.plan[k]||[]),a.dataset.add])];save();render()}
   if(r){const k=wkISO(pw);st.plan[k]=(st.plan[k]||[]).filter(x=>x!=r.dataset.rm);save();render()}
@@ -168,6 +234,18 @@ document.addEventListener("click",e=>{
   if(t){st.tab=+t.dataset.t;syllabusGroup="all";save();render()}
   if(n){st.view=n.dataset.v;save();render()}
   if(d&&confirm("Delete this test?")){st.tests=st.tests.filter(x=>x.id!=d.dataset.del);save();render()}
+});
+$("dueform").onsubmit=e=>{e.preventDefault();if(activeDueId){st.due=st.due||{};st.due[activeDueId]=$("dueinput").value;save();render();$("duedialog").close();}};
+$("cleardue").onclick=()=>{if(activeDueId){if(st.due)delete st.due[activeDueId];save();render();$("duedialog").close();}};
+document.addEventListener("submit",e=>{
+  if(e.target.id==="customtodoform"){
+    e.preventDefault();
+    const input=$("customtodotext"),val=input?input.value.trim().slice(0,180):"";
+    if(!val)return;
+    st.todos=st.todos||[];
+    st.todos.push({id:String(Date.now()),text:val,done:false});
+    save();render();
+  }
 });
 document.addEventListener("toggle",e=>{const id=e.target.dataset&&e.target.dataset.ot;if(id){e.target.open?openT.add(id):openT.delete(id)}},true);
 document.addEventListener("change",e=>{
@@ -188,7 +266,7 @@ $("addt").onclick=()=>{
 };
 $("gv").onclick=()=>{st.grid=!st.grid;save();render()};
 $("hide").checked=st.hide;$("hide").onchange=()=>{st.hide=$("hide").checked;save();render()};
-$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.dayDone={};st.lec=fresh().lec;st.legacyProgress={};save();render()}};
+$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.dayDone={};st.due={};st.todos=[];st.lec=fresh().lec;st.legacyProgress={};save();render()}};
 buildPicker();render();
 // Paste your PUBLIC Firebase web config here before sharing/hosting this file.
 const FIREBASE_CONFIG = {

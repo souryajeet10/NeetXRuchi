@@ -32,7 +32,7 @@
   <div><div class="eyebrow" style="color:inherit;opacity:.7">Your overall progress</div><div class="big" id="pct">0%</div><div class="mute" id="cnt"></div><div class="bar"><i id="fill"></i></div></div>
   <div class="exam"><b id="days">–</b>days to target<small>2 May 2027 · planning date</small></div>
 </section>
-<div class="nav"><button data-v="syl">Syllabus</button><button data-v="plan">Plan &amp; tests</button><button data-v="cal">Calendar</button></div>
+<div class="nav"><button data-v="syl">Syllabus</button><button data-v="plan">Plan &amp; tests</button><button data-v="cal">Calendar</button><button data-v="todo">To-Do list</button></div>
 
 <div id="syl">
   <div class="tabs" role="tablist" id="tabs"></div>
@@ -62,6 +62,8 @@
 
 <div id="cal" hidden><div id="calmain"></div><div class="card picker-card"><details><summary id="dsum">Choose chapters for the selected day</summary><div id="dpick"></div></details></div></div>
 
+<div id="todo" hidden><div id="todomain"></div><div class="card picker-card" style="margin-top:14px"><details id="todopickdetails"><summary id="tsum">Add chapters to today’s study plan</summary><div id="tpick"></div></details></div></div>
+
 </div><footer class="foot"><span id="statusbar"><span id="syncmsg" role="status" aria-live="polite"></span> <button class="btn" id="retry" hidden>Retry save</button> <button class="btn" id="cloudreload" hidden>Load cloud version</button></span><span>Your pace. Your progress. Your future.</span><button id="reset">Reset current progress</button></footer>
 <dialog id="authdialog"><button class="close" data-close="authdialog" aria-label="Close">×</button><div class="eyebrow">Your personal study space</div><h2 id="authtitle">Your study account.</h2><p class="notice">Your name, study ID and progress, all together.</p><p id="authmsg" class="notice" role="status"></p>
 <form id="authform">
@@ -73,7 +75,7 @@
 <section id="newidpanel" hidden><h3>Your study space is ready ♡</h3><label for="newid">Your study ID</label><input id="newid" readonly><p class="notice">Save this ID. Use it to open your progress on any device.</p><div class="row"><button class="btn" type="button" id="copyid">Copy ID</button><button class="btn p" type="button" id="entertracker">Open my tracker</button></div></section>
 </form>
 <div id="signedin" hidden><p class="account-email" id="accountemail"></p><p class="notice">Your syllabus, plans, tests and lecture progress belong to this account. Use your study ID to sign in again.</p><div class="row"><button class="btn" id="signout">Sign out</button></div></div></dialog>
-
+<dialog id="duedialog"><button class="close" data-close="duedialog" aria-label="Close">×</button><div class="eyebrow">Target completion date</div><h2 id="duename">Set Target Date</h2><p class="notice" id="duesub">Assign a target date to finish studying this chapter.</p><form id="dueform"><label for="dueinput">Target date</label><input type="date" id="dueinput" required><div class="row"><button class="btn" type="button" id="cleardue">Clear date</button><button class="btn p" type="submit">Save target date</button></div></form></dialog>
 </main>
 <div id="testtoast" class="test-toast" hidden><span aria-hidden="true">✓</span><span role="status" aria-live="polite" id="testtoastmessage"></span><button type="button" id="closetesttoast" aria-label="Dismiss notification">×</button></div>
 <script type="module" src="/src/app.js"></script>
