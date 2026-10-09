@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, runTransaction, serverTimestamp, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
 import { nameParts, credentialsFor } from './identity.js';
-import { S, ALL, BY, chapters, LECTURES } from './syllabus.js';
+import { S, ALL, BY, chapters } from './syllabus.js';
 import { fresh, normalize } from './state.js';
 import { createChapterPicker } from './chapter-picker.js';
 
@@ -45,7 +45,7 @@ function render(){
   if(st.view=="syl")renderSyl(pcts);else if(st.view=="plan")renderPlan();else renderCal();
 }
 function lecRow(id){
-  const L=st.lec[id]||{n:LECTURES[id]||0,d:[]},op=openL.has(id);
+  const L=st.lec[id]||{n:0,d:[]},op=openL.has(id);
   return `<div class="lec"><button class="btn" data-lt="${id}">${L.n?`Lectures ${L.d.length}/${L.n}`:"Add lectures"} ${op?"&#9652;":"&#9662;"}</button>${op?`<span class="mute" style="font-size:13px">Total</span><input class="num" type="number" min="0" max="60" value="${L.n}" data-ln="${id}" aria-label="Total lectures">${Array.from({length:L.n},(_,i)=>`<button class="chip" aria-pressed="${L.d.includes(i+1)}" data-ld="${id}|${i+1}">Lec ${i+1}</button>`).join("")}`:""}</div>`;
 }
 function renderSyl(pcts){
@@ -157,7 +157,7 @@ document.addEventListener("click",e=>{
   if(cd){cs=cd.dataset.cd;render()}
   const lt_=e.target.closest("[data-lt]"),ld_=e.target.closest("[data-ld]");
   if(lt_){const id=lt_.dataset.lt;openL.has(id)?openL.delete(id):openL.add(id);render()}
-  if(ld_){const v=ld_.dataset.ld,i=v.lastIndexOf("|"),id=v.slice(0,i),n=+v.slice(i+1),L=st.lec[id]=st.lec[id]||{n:LECTURES[id]||0,d:[]};L.d=L.d.includes(n)?L.d.filter(x=>x!=n):[...L.d,n];save();render()}
+  if(ld_){const v=ld_.dataset.ld,i=v.lastIndexOf("|"),id=v.slice(0,i),n=+v.slice(i+1),L=st.lec[id]=st.lec[id]||{n:0,d:[]};L.d=L.d.includes(n)?L.d.filter(x=>x!=n):[...L.d,n];save();render()}
   const rd=e.target.closest("[data-rmd]"),mv=e.target.closest("[data-mv]");
   if(rd){const v=rd.dataset.rmd,d=v.slice(0,10),id=v.slice(11);st.day[d]=(st.day[d]||[]).filter(x=>x!=id);save();render()}
   if(mv){const v=mv.dataset.mv,d=v.slice(0,10),id=v.slice(11),k=iso(today());st.day[d]=(st.day[d]||[]).filter(x=>x!=id);st.day[k]=[...new Set([...(st.day[k]||[]),id])];save();render()}
@@ -168,7 +168,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("toggle",e=>{const id=e.target.dataset&&e.target.dataset.ot;if(id){e.target.open?openT.add(id):openT.delete(id)}},true);
 document.addEventListener("change",e=>{
   if(e.target.id=="wk"||e.target.id=="mo"){st[e.target.id]=Math.max(0,+e.target.value||0);save();render()}
-  if(e.target.dataset.ln){const id=e.target.dataset.ln,n=Math.max(0,Math.min(60,Math.floor(+e.target.value||0))),L=st.lec[id]=st.lec[id]||{n:LECTURES[id]||0,d:[]};L.n=n;L.d=L.d.filter(x=>x<=n);save();render()}
+  if(e.target.dataset.ln){const id=e.target.dataset.ln,n=Math.max(0,Math.min(60,Math.floor(+e.target.value||0))),L=st.lec[id]=st.lec[id]||{n:0,d:[]};L.n=n;L.d=L.d.filter(x=>x<=n);save();render()}
   if(e.target.dataset.tc){const v=e.target.dataset.tc,i=v.indexOf("|"),t=st.tests.find(x=>x.id==v.slice(0,i));if(t){t.chk=t.chk||{};t.chk[v.slice(i+1)]=e.target.checked;save();render()}}
 });
 $("addt").onclick=()=>{
