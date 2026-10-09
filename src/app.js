@@ -128,47 +128,35 @@ function renderCal(){
   let c=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<div class="h">${d}</div>`).join("")+"<div></div>".repeat(off);
   for(let d=1;d<=n;d++){
     const dt=new Date(y,m,d),k=iso(dt),pn=(st.plan[wsOf(dt)]||[]).length,tn=st.tests.filter(t=>t.date==k).length,sn=(st.dayDone[k]||[]).length,dn=(st.day[k]||[]).length;
-    c+=`<button class="cd${pn?" pl":""}${k==tk?" td":""}${k==EXAM?" ex":""}${k==cs?" sel":""}" data-cd="${k}"><b>${d}</b>${k==EXAM?'<span class="m e">NEET</span>':""}${tn?`<span class="m t">Test${tn>1?" "+tn:""}</span>`:""}${sn?`<span class="m s">&#10003;${sn}</span>`:""}${dn?`<span class="m d">D${dn}</span>`:""}${pn&&dt.getDay()==1?`<span class="m p">P${pn}</span>`:""}</button>`;
+    const dueChs=Object.keys(st.due||{}).filter(id=>st.due[id]===k&&Object.hasOwn(BY,id));
+    const un=dueChs.length;
+    c+=`<button class="cd${pn?" pl":""}${k==tk?" td":""}${k==EXAM?" ex":""}${k==cs?" sel":""}" data-cd="${k}"><b>${d}</b>${k==EXAM?'<span class="m e">NEET</span>':""}${tn?`<span class="m t">Test${tn>1?" "+tn:""}</span>`:""}${un?`<span class="m tg" title="${un} target completion date${un>1?'s':''}">🎯${un}</span>`:""}${sn?`<span class="m s">&#10003;${sn}</span>`:""}${dn?`<span class="m d">D${dn}</span>`:""}${pn&&dt.getDay()==1?`<span class="m p">P${pn}</span>`:""}</button>`;
   }
   const dd=new Date(cs+"T00:00:00"),ts=st.tests.filter(t=>t.date==cs),sd=st.dayDone[cs]||[],wp=st.plan[wsOf(dd)]||[];
   const dp=st.day[cs]||[];
+  const dueForDay=Object.keys(st.due||{}).filter(id=>st.due[id]===cs&&Object.hasOwn(BY,id));
   pickers.dpick.setSelected(dp);
   $("dsum").textContent="Choose chapters for "+fmt(cs);
   const list=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span></div>`).join(""):`<div class="mute">Nothing yet.</div>`;
+  const listDue=a=>a.length?a.map(id=>{
+    const isDone=studied(id);
+    return `<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${isDone?`<span class="tag good" style="flex:none">Studied</span>`:`<span class="tag ${dleft(cs)<0?'bad':'good'}" style="flex:none">${dleft(cs)<0?'Overdue':'Target'}</span><button class="btn" data-k="${id}|0" style="font-size:11px;padding:3px 8px">Mark studied</button>`}<button class="btn" data-setdue="${id}" title="Edit target date" style="font-size:11px;padding:3px 8px">✎</button></div>`;
+  }).join(""):`<div class="mute">Nothing yet.</div>`;
   $("calmain").innerHTML=`<div class="card"><div class="row" style="margin-bottom:10px"><button class="btn" data-cm="-1">&lsaquo; Prev</button><b>${cm.toLocaleDateString("en-IN",{month:"long",year:"numeric"})}</b><button class="btn" data-cm="1">Next &rsaquo;</button></div>
-  <div class="cal">${c}</div><p class="mute" style="margin:10px 0 0;font-size:12px">Orange D = chapters planned for that day. Blue tint and P = planned for that week. &#10003; = chapters studied that day. Tap a day for details.</p></div>
+  <div class="cal">${c}</div><p class="mute" style="margin:10px 0 0;font-size:12px">Orange D = chapters planned for that day. Blue tint and P = planned for that week. &#10003; = chapters studied that day. 🎯 = target completion due date. Tap a day for details.</p></div>
   <div class="card"><h2>${dd.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</h2>
   ${cs==EXAM?'<p><b>NEET 2027 exam day.</b></p>':dleft(cs)>=0?`<p class="mute">${dleft(cs)} days from today</p>`:""}
   ${ts.map(t=>`<div class="grp" style="margin-top:4px">Test: ${esc(t.name)}</div>${list(t.ch)}`).join("")}
+  ${dueForDay.length?`<div class="grp" style="margin-top:4px">🎯 Target completion dates (${dueForDay.length})</div>${listDue(dueForDay)}`:""}
   <div class="grp">Planned for this day</div>${dlist(dp,cs)}
   <div class="grp">Studied this day</div>${listStudied(sd,cs)}
   <div class="grp">Planned for this week</div>${list(wp)}</div>`;
 }
-let todoDueFilter='missing',activeDueId=null;
+let activeDueId=null;
 function renderTodo(){
   const tk=iso(today()),planned=st.day[tk]||[],studiedToday=st.dayDone[tk]||[];
   const total=new Set([...planned,...studiedToday]).size,done=studiedToday.length;
   const pct=total?Math.min(100,Math.round(done/total*100)):0;
-  const uncompleted=ALL.filter(a=>!studied(a.id));
-  const missingDue=uncompleted.filter(a=>!(st.due&&st.due[a.id]));
-  const overdueDue=uncompleted.filter(a=>st.due&&st.due[a.id]&&dleft(st.due[a.id])<0).sort((a,b)=>st.due[a.id].localeCompare(st.due[b.id]));
-  const upcomingDue=uncompleted.filter(a=>st.due&&st.due[a.id]&&dleft(st.due[a.id])>=0).sort((a,b)=>st.due[a.id].localeCompare(st.due[b.id]));
-  let dueListHtml="";
-  if(todoDueFilter==='missing'){
-    dueListHtml=missingDue.length?missingDue.slice(0,30).map(a=>`
-      <div class="f" style="--c:${S[BY[a.id].s].c}"><i></i><span>${BY[a.id].c}<span class="mute"> · ${S[BY[a.id].s].n}</span></span><span class="tag bad" style="font-size:11px">Missing target date</span><button class="btn p" data-setdue="${a.id}" style="font-size:11px;padding:5px 11px">+ Set target date</button></div>
-    `).join("")+(missingDue.length>30?`<p class="mute" style="margin-top:10px;font-size:12px">Showing 30 of ${missingDue.length} chapters missing target dates.</p>`:""):`<div class="mute">Every uncompleted chapter has a target date! Great planning. ♡</div>`;
-  }else if(todoDueFilter==='overdue'){
-    dueListHtml=overdueDue.length?overdueDue.map(a=>{
-      const d=Math.abs(dleft(st.due[a.id]));
-      return `<div class="f" style="--c:${S[BY[a.id].s].c}"><i></i><span>${BY[a.id].c}<span class="mute"> · ${S[BY[a.id].s].n}</span></span><span class="tag bad" style="font-size:11px">Overdue by ${d} ${d===1?'day':'days'} (${fmt(st.due[a.id])})</span><button class="btn" data-setdue="${a.id}" style="font-size:11px;padding:5px 10px">Reschedule</button><button class="btn" data-markdone="${tk}|${a.id}" style="font-size:11px;padding:5px 10px">Mark studied</button></div>`;
-    }).join(""):`<div class="mute">No overdue chapters. You are on track! ♡</div>`;
-  }else{
-    dueListHtml=upcomingDue.length?upcomingDue.map(a=>{
-      const d=dleft(st.due[a.id]);
-      return `<div class="f" style="--c:${S[BY[a.id].s].c}"><i></i><span>${BY[a.id].c}<span class="mute"> · ${S[BY[a.id].s].n}</span></span><span class="tag good" style="font-size:11px">Target: ${fmt(st.due[a.id])}${d===0?' (Today!)':` (${d}d left)`}</span><button class="btn" data-setdue="${a.id}" style="font-size:11px;padding:5px 10px">Change</button></div>`;
-    }).join(""):`<div class="mute">No upcoming target dates assigned yet. Assign dates from the Missing tab.</div>`;
-  }
   const customTodos=st.todos||[],customDone=customTodos.filter(t=>t.done).length;
   $("todomain").innerHTML=`
     <div class="card">
@@ -181,12 +169,6 @@ function renderTodo(){
       <div class="row"><h2>Daily to-do tasks</h2><span class="mute" style="font-size:12px">${customDone} of ${customTodos.length} tasks done</span></div>
       <form id="customtodoform" style="display:flex;gap:8px;margin:12px 0 16px"><input type="text" id="customtodotext" placeholder="Add a custom task (e.g. solve 40 MCQs, revise notes…)" style="flex:1" required maxlength="180"><button class="btn p" type="submit">+ Add task</button></form>
       ${customTodos.length?customTodos.map(t=>`<div class="f"><label style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer"><input type="checkbox" data-todotoggle="${t.id}" ${t.done?"checked":""}><span style="${t.done?'text-decoration:line-through;opacity:.6':''}">${esc(t.text)}</span></label><button class="btn" data-tododel="${t.id}" aria-label="Delete">&times;</button></div>`).join(""):`<div class="mute">No custom tasks yet. Add one above!</div>`}
-    </div>
-    <div class="card">
-      <h2>Chapter target completion dates</h2>
-      <p class="mute" style="font-size:13px;margin:4px 0 12px">Assign target dates to uncompleted chapters. Completed chapters are automatically ignored.</p>
-      <div class="todo-due-filters"><button type="button" data-todofilter="missing" aria-pressed="${todoDueFilter==='missing'}">Missing target date (${missingDue.length})</button><button type="button" data-todofilter="upcoming" aria-pressed="${todoDueFilter==='upcoming'}">Upcoming targets (${upcomingDue.length})</button><button type="button" data-todofilter="overdue" aria-pressed="${todoDueFilter==='overdue'}">Overdue (${overdueDue.length})</button></div>
-      ${dueListHtml}
     </div>`;
   if(pickers.tpick){pickers.tpick.setSelected(planned);$("tsum").textContent="Add chapters to today’s study plan ("+fmt(tk)+")"}
 }
@@ -213,8 +195,6 @@ document.addEventListener("click",e=>{
   if(umd){const v=umd.dataset.unmarkdone,i=v.indexOf("|"),date=v.slice(0,i),id=v.slice(i+1);st.dayDone[date]=(st.dayDone[date]||[]).filter(x=>x!=id);save();render()}
   const sdue=e.target.closest("[data-setdue]");
   if(sdue){activeDueId=sdue.dataset.setdue;$("duename").textContent=BY[activeDueId].c+" · "+S[BY[activeDueId].s].n;$("dueinput").value=st.due[activeDueId]||iso(today());$("duedialog").showModal();return}
-  const tdf=e.target.closest("[data-todofilter]");
-  if(tdf){todoDueFilter=tdf.dataset.todofilter;render();return}
   const tdt=e.target.closest("[data-todotoggle]");
   if(tdt){const item=(st.todos||[]).find(x=>x.id===tdt.dataset.todotoggle);if(item){item.done=!item.done;save();render();}return}
   const tdd=e.target.closest("[data-tododel]");
