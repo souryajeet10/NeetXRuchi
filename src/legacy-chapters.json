@@ -1,0 +1,226 @@
+{
+  "Physics|Units & Measurements": [
+    "Physics|Units and Measurements"
+  ],
+  "Physics|Kinematics": [
+    "Physics|Motion in a Straight Line",
+    "Physics|Motion in a Plane"
+  ],
+  "Physics|Laws of Motion": [
+    "Physics|Laws of Motion"
+  ],
+  "Physics|Work, Energy & Power": [
+    "Physics|Work, Energy and Power"
+  ],
+  "Physics|Rotational Motion": [
+    "Physics|Rotational Motion"
+  ],
+  "Physics|Gravitation": [
+    "Physics|Gravitation"
+  ],
+  "Physics|Properties of Solids & Liquids": [
+    "Physics|Mechanical Properties of Solids",
+    "Physics|Mechanical Properties of Fluids"
+  ],
+  "Physics|Thermodynamics": [
+    "Physics|Thermodynamics"
+  ],
+  "Physics|Kinetic Theory of Gases": [
+    "Physics|Kinetic Theory"
+  ],
+  "Physics|Oscillations & Waves": [
+    "Physics|Oscillations",
+    "Physics|Waves"
+  ],
+  "Physics|Electrostatics": [
+    "Physics|Electric Charges and Fields",
+    "Physics|Electrostatic Potential and Capacitance"
+  ],
+  "Physics|Current Electricity": [
+    "Physics|Current Electricity"
+  ],
+  "Physics|Magnetic Effects of Current & Magnetism": [
+    "Physics|Moving Charges and Magnetism",
+    "Physics|Magnetism and Matter"
+  ],
+  "Physics|EMI & Alternating Current": [
+    "Physics|Electromagnetic Induction",
+    "Physics|Alternating Current"
+  ],
+  "Physics|Electromagnetic Waves": [
+    "Physics|Electromagnetic Waves"
+  ],
+  "Physics|Ray & Wave Optics": [
+    "Physics|Ray Optics and Optical Instruments",
+    "Physics|Wave Optics"
+  ],
+  "Physics|Dual Nature of Matter & Radiation": [
+    "Physics|Dual Nature of Radiation and Matter"
+  ],
+  "Physics|Atoms & Nuclei": [
+    "Physics|Atoms",
+    "Physics|Nuclei"
+  ],
+  "Physics|Electronic Devices": [
+    "Physics|Semiconductor Electronics: Materials, Devices and Simple Circuits"
+  ],
+  "Chemistry|Some Basic Concepts of Chemistry": [
+    "Chemistry|Some Basic Concept of Chemistry"
+  ],
+  "Chemistry|Structure of Atom": [
+    "Chemistry|Structure of Atom"
+  ],
+  "Chemistry|Chemical Thermodynamics": [
+    "Chemistry|Thermodynamics & Thermochemistry"
+  ],
+  "Chemistry|Equilibrium": [
+    "Chemistry|Chemical Equilibrium",
+    "Chemistry|Ionic Equilibrium"
+  ],
+  "Chemistry|Redox Reactions": [
+    "Chemistry|Redox Reaction"
+  ],
+  "Chemistry|Solutions": [
+    "Chemistry|Solutions"
+  ],
+  "Chemistry|Electrochemistry": [
+    "Chemistry|Electrochemistry"
+  ],
+  "Chemistry|Chemical Kinetics": [
+    "Chemistry|Chemical Kinetics"
+  ],
+  "Chemistry|Periodic Classification & Properties": [
+    "Chemistry|Classification of Elements and Periodicity in Properties"
+  ],
+  "Chemistry|Chemical Bonding & Molecular Structure": [
+    "Chemistry|Chemical Bonding and Molecular Structure"
+  ],
+  "Chemistry|p-Block Elements": [
+    "Chemistry|The p-Block Elements"
+  ],
+  "Chemistry|d- & f-Block Elements": [
+    "Chemistry|The d and f-Block Elements"
+  ],
+  "Chemistry|Coordination Compounds": [
+    "Chemistry|Coordination Compound"
+  ],
+  "Chemistry|Basic Principles & GOC": [
+    "Chemistry|Organic Chemistry: Some Basic Principles and Techniques (IUPAC Naming)",
+    "Chemistry|Organic Chemistry: Some Basic Principles and Techniques (Isomerism)",
+    "Chemistry|Organic Chemistry: Some Basic Principles and Techniques (GOC)"
+  ],
+  "Chemistry|Hydrocarbons": [
+    "Chemistry|Hydrocarbon"
+  ],
+  "Chemistry|Haloalkanes & Haloarenes": [
+    "Chemistry|Haloalkanes and Haloarenes"
+  ],
+  "Chemistry|Alcohols, Phenols & Ethers": [
+    "Chemistry|Alcohols, Ethers and Phenols"
+  ],
+  "Chemistry|Aldehydes, Ketones & Carboxylic Acids": [
+    "Chemistry|Aldehydes, Ketones and Carboxylic Acids"
+  ],
+  "Chemistry|Amines": [
+    "Chemistry|Amines"
+  ],
+  "Chemistry|Biomolecules": [
+    "Chemistry|Biomolecules"
+  ],
+  "Botany|The Living World": [
+    "Botany|The Living World"
+  ],
+  "Botany|Biological Classification": [
+    "Botany|Biological Classification"
+  ],
+  "Botany|Plant Kingdom": [
+    "Botany|Plant Kingdom"
+  ],
+  "Botany|Morphology of Flowering Plants": [
+    "Botany|Morphology of Flowering Plants"
+  ],
+  "Botany|Anatomy of Flowering Plants": [
+    "Botany|Anatomy of Flowering Plants"
+  ],
+  "Botany|Cell: The Unit of Life": [
+    "Botany|Cell - The Unit of Life"
+  ],
+  "Botany|Cell Cycle & Cell Division": [
+    "Botany|Cell Cycle and Cell Division"
+  ],
+  "Botany|Photosynthesis": [
+    "Botany|Photosynthesis in Higher Plants"
+  ],
+  "Botany|Respiration in Plants": [
+    "Botany|Respiration in Plants"
+  ],
+  "Botany|Plant Growth & Development": [
+    "Botany|Plant Growth and Development"
+  ],
+  "Botany|Biomolecules": [
+    "Zoology|Biomolecules"
+  ],
+  "Botany|Sexual Reproduction in Flowering Plants": [
+    "Botany|Sexual Reproduction in Flowering Plant"
+  ],
+  "Botany|Principles of Inheritance & Variation": [
+    "Botany|Principle of Inheritance and Variation"
+  ],
+  "Botany|Molecular Basis of Inheritance": [
+    "Botany|Molecular Basis of Inheritance"
+  ],
+  "Botany|Microbes in Human Welfare": [
+    "Botany|Microbes in Human Welfare"
+  ],
+  "Botany|Organisms & Populations": [
+    "Botany|Organisms and Population"
+  ],
+  "Botany|Ecosystem": [
+    "Botany|Ecosystem"
+  ],
+  "Botany|Biodiversity & Conservation": [
+    "Botany|Biodiversity and Conservation"
+  ],
+  "Zoology|Animal Kingdom": [
+    "Zoology|Animal Kingdom"
+  ],
+  "Zoology|Structural Organisation in Animals": [
+    "Zoology|Structural Organization in Animals"
+  ],
+  "Zoology|Breathing & Exchange of Gases": [
+    "Zoology|Breathing and Exchange of Gases"
+  ],
+  "Zoology|Body Fluids & Circulation": [
+    "Zoology|Body Fluids and Circulation"
+  ],
+  "Zoology|Excretory Products & Elimination": [
+    "Zoology|Excretory Products & their Elimination"
+  ],
+  "Zoology|Locomotion & Movement": [
+    "Zoology|Locomotion & Movement"
+  ],
+  "Zoology|Neural Control & Coordination": [
+    "Zoology|Neural Control & Coordination"
+  ],
+  "Zoology|Chemical Coordination & Integration": [
+    "Zoology|Chemical Coordination & Integration"
+  ],
+  "Zoology|Human Reproduction": [
+    "Zoology|Human Reproduction"
+  ],
+  "Zoology|Reproductive Health": [
+    "Zoology|Reproductive Health"
+  ],
+  "Zoology|Evolution": [
+    "Zoology|Evolution"
+  ],
+  "Zoology|Human Health & Disease": [
+    "Zoology|Human Health and Diseases"
+  ],
+  "Zoology|Biotechnology: Principles & Processes": [
+    "Zoology|Biotechnology: Principles & Processes"
+  ],
+  "Zoology|Biotechnology & Its Applications": [
+    "Zoology|Biotechnology and its Applications"
+  ]
+}

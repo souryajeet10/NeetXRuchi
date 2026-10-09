@@ -9,6 +9,8 @@ This dedication describes the intended user; it does not restrict website access
 - Sign up with **your name only**. Firebase assigns IDs such as `NEETXRUCHI01`, `NEETXRUCHI02`.
 - Sign in with **ID only**. ID matching ignores case; names with the same normalized spelling share a serial counter.
 - Track studied/revised/PYQs, lectures, tests, daily plans and weekly targets. Includes responsive layouts and dark mode.
+- 89 chapters and 655 planned lectures from the supplied subject planners. Revision sessions are excluded.
+- Searchable chapter pickers for weekly plans, daily plans and tests, with subject filters, selected counts, select-visible and clear-selection controls.
 - No guest entry or connection settings in the user interface.
 
 ## Go live
@@ -33,7 +35,7 @@ The app uses session persistence for sign-in. Unsaved offline edits stay in the 
 
 Previous `study_...` accounts remain in Firebase but still require the previous tracker. This release does not migrate those credentials or progress automatically.
 
-The syllabus and **2 May 2027 planning target** came from the original tracker. The date is not represented as an official exam announcement.
+The chapters and lecture counts follow the supplied Yakeen planners; see [source notes](docs/planner-sources.md). The **2 May 2027 planning target** came from the original tracker and is not represented as an official exam announcement.
 
 ## Development
 

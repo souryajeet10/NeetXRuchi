@@ -1,0 +1,388 @@
+{
+  "physics": {
+    "file": "Lecture_Planner___Physics_By_Manish_Raj_Sir___Yakeen_NEET_2_0_2026.pdf",
+    "chapters": [
+      {
+        "name": "Basic Maths & Calculus (Mathematical Tools)",
+        "lectures": 11
+      },
+      {
+        "name": "Vectors",
+        "lectures": 7
+      },
+      {
+        "name": "Units and Measurements",
+        "lectures": 10
+      },
+      {
+        "name": "Motion in a Straight Line",
+        "lectures": 14
+      },
+      {
+        "name": "Motion in a Plane",
+        "lectures": 8
+      },
+      {
+        "name": "Laws of Motion",
+        "lectures": 15
+      },
+      {
+        "name": "Work, Energy and Power",
+        "lectures": 7
+      },
+      {
+        "name": "Centre of Mass and System of Particles",
+        "lectures": 4
+      },
+      {
+        "name": "Rotational Motion",
+        "lectures": 12
+      },
+      {
+        "name": "Gravitation",
+        "lectures": 7
+      },
+      {
+        "name": "Mechanical Properties of Solids",
+        "lectures": 3
+      },
+      {
+        "name": "Mechanical Properties of Fluids",
+        "lectures": 8
+      },
+      {
+        "name": "Thermal Properties of Matter",
+        "lectures": 8
+      },
+      {
+        "name": "Kinetic Theory",
+        "lectures": 3
+      },
+      {
+        "name": "Thermodynamics",
+        "lectures": 4
+      },
+      {
+        "name": "Oscillations",
+        "lectures": 7
+      },
+      {
+        "name": "Waves",
+        "lectures": 8
+      },
+      {
+        "name": "Electric Charges and Fields",
+        "lectures": 10
+      },
+      {
+        "name": "Electrostatic Potential and Capacitance",
+        "lectures": 9
+      },
+      {
+        "name": "Current Electricity",
+        "lectures": 9
+      },
+      {
+        "name": "Moving Charges and Magnetism",
+        "lectures": 8
+      },
+      {
+        "name": "Magnetism and Matter",
+        "lectures": 4
+      },
+      {
+        "name": "Electromagnetic Induction",
+        "lectures": 6
+      },
+      {
+        "name": "Alternating Current",
+        "lectures": 5
+      },
+      {
+        "name": "Electromagnetic Waves",
+        "lectures": 3
+      },
+      {
+        "name": "Ray Optics and Optical Instruments",
+        "lectures": 10
+      },
+      {
+        "name": "Wave Optics",
+        "lectures": 5
+      },
+      {
+        "name": "Dual Nature of Radiation and Matter",
+        "lectures": 3
+      },
+      {
+        "name": "Atoms",
+        "lectures": 3
+      },
+      {
+        "name": "Nuclei",
+        "lectures": 3
+      },
+      {
+        "name": "Semiconductor Electronics: Materials, Devices and Simple Circuits",
+        "lectures": 4
+      }
+    ]
+  },
+  "physical": {
+    "file": "Lecture_Planner___Physical_Chemistry_By_Sudhanshu_Kumar_Sir___Yakeen.pdf",
+    "chapters": [
+      {
+        "name": "Some Basic Concept of Chemistry",
+        "lectures": 15
+      },
+      {
+        "name": "Redox Reaction",
+        "lectures": 5
+      },
+      {
+        "name": "Solutions",
+        "lectures": 10
+      },
+      {
+        "name": "Thermodynamics & Thermochemistry",
+        "lectures": 11
+      },
+      {
+        "name": "Chemical Equilibrium",
+        "lectures": 6
+      },
+      {
+        "name": "Ionic Equilibrium",
+        "lectures": 9
+      },
+      {
+        "name": "Electrochemistry",
+        "lectures": 8
+      },
+      {
+        "name": "Chemical Kinetics",
+        "lectures": 7
+      },
+      {
+        "name": "Structure of Atom",
+        "lectures": 9
+      },
+      {
+        "name": "Practical Physical Chemistry",
+        "lectures": 1
+      }
+    ]
+  },
+  "inorganic": {
+    "file": "Lecture_Planner___Inorganic_Chemistry_By_Kunwar_Om_Pandey_Sir__.pdf",
+    "chapters": [
+      {
+        "name": "Classification of Elements and Periodicity in Properties",
+        "lectures": 13
+      },
+      {
+        "name": "Chemical Bonding and Molecular Structure",
+        "lectures": 18
+      },
+      {
+        "name": "Coordination Compound",
+        "lectures": 13
+      },
+      {
+        "name": "The d and f-Block Elements",
+        "lectures": 5
+      },
+      {
+        "name": "The p-Block Elements",
+        "lectures": 6
+      },
+      {
+        "name": "Salt Analysis",
+        "lectures": 2
+      }
+    ]
+  },
+  "organic": {
+    "file": "Lecture_Planner___Organic_Chemistry_By_Shubh_Karan_Choudhary_Sir.pdf",
+    "chapters": [
+      {
+        "name": "Organic Chemistry: Some Basic Principles and Techniques (IUPAC Naming)",
+        "lectures": 9
+      },
+      {
+        "name": "Organic Chemistry: Some Basic Principles and Techniques (Isomerism)",
+        "lectures": 13
+      },
+      {
+        "name": "Organic Chemistry: Some Basic Principles and Techniques (GOC)",
+        "lectures": 12
+      },
+      {
+        "name": "Hydrocarbon",
+        "lectures": 12
+      },
+      {
+        "name": "Haloalkanes and Haloarenes",
+        "lectures": 9
+      },
+      {
+        "name": "Alcohols, Ethers and Phenols",
+        "lectures": 7
+      },
+      {
+        "name": "Aldehydes, Ketones and Carboxylic Acids",
+        "lectures": 9
+      },
+      {
+        "name": "Amines",
+        "lectures": 4
+      },
+      {
+        "name": "Biomolecules",
+        "lectures": 4
+      },
+      {
+        "name": "Purification and Qualitative and Quantitative Analysis",
+        "lectures": 2
+      }
+    ]
+  },
+  "botany": {
+    "file": "Lecture_Planner___Botany_By_Vipin_Sharma_Sir___Yakeen_NEET_2_0_2026.pdf",
+    "chapters": [
+      {
+        "name": "Cell - The Unit of Life",
+        "lectures": 9
+      },
+      {
+        "name": "Cell Cycle and Cell Division",
+        "lectures": 7
+      },
+      {
+        "name": "The Living World",
+        "lectures": 3
+      },
+      {
+        "name": "Biological Classification",
+        "lectures": 7
+      },
+      {
+        "name": "Plant Kingdom",
+        "lectures": 7
+      },
+      {
+        "name": "Morphology of Flowering Plants",
+        "lectures": 7
+      },
+      {
+        "name": "Anatomy of Flowering Plants",
+        "lectures": 6
+      },
+      {
+        "name": "Respiration in Plants",
+        "lectures": 6
+      },
+      {
+        "name": "Photosynthesis in Higher Plants",
+        "lectures": 6
+      },
+      {
+        "name": "Plant Growth and Development",
+        "lectures": 4
+      },
+      {
+        "name": "Sexual Reproduction in Flowering Plant",
+        "lectures": 9
+      },
+      {
+        "name": "Molecular Basis of Inheritance",
+        "lectures": 11
+      },
+      {
+        "name": "Principle of Inheritance and Variation",
+        "lectures": 13
+      },
+      {
+        "name": "Microbes in Human Welfare",
+        "lectures": 3
+      },
+      {
+        "name": "Organisms and Population",
+        "lectures": 5
+      },
+      {
+        "name": "Ecosystem",
+        "lectures": 3
+      },
+      {
+        "name": "Biodiversity and Conservation",
+        "lectures": 3
+      }
+    ]
+  },
+  "zoology": {
+    "file": "Lecture_Planner___Zoology_By_Samapti_Sinha_Ma'am___Yakeen_NEET_2.pdf",
+    "chapters": [
+      {
+        "name": "Structural Organization in Animals",
+        "lectures": 15
+      },
+      {
+        "name": "Breathing and Exchange of Gases",
+        "lectures": 8
+      },
+      {
+        "name": "Body Fluids and Circulation",
+        "lectures": 8
+      },
+      {
+        "name": "Excretory Products & their Elimination",
+        "lectures": 7
+      },
+      {
+        "name": "Locomotion & Movement",
+        "lectures": 7
+      },
+      {
+        "name": "Neural Control & Coordination",
+        "lectures": 6
+      },
+      {
+        "name": "Chemical Coordination & Integration",
+        "lectures": 7
+      },
+      {
+        "name": "Animal Kingdom",
+        "lectures": 7
+      },
+      {
+        "name": "Biomolecules",
+        "lectures": 7
+      },
+      {
+        "name": "Human Reproduction",
+        "lectures": 10
+      },
+      {
+        "name": "Reproductive Health",
+        "lectures": 5
+      },
+      {
+        "name": "Human Health and Diseases",
+        "lectures": 8
+      },
+      {
+        "name": "Biotechnology: Principles & Processes",
+        "lectures": 5
+      },
+      {
+        "name": "Biotechnology and its Applications",
+        "lectures": 3
+      },
+      {
+        "name": "Evolution",
+        "lectures": 6
+      }
+    ]
+  }
+}

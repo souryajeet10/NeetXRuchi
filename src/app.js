@@ -2,35 +2,18 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, runTransaction, serverTimestamp, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
 import { nameParts, credentialsFor } from './identity.js';
+import { S, ALL, BY, chapters, LECTURES } from './syllabus.js';
+import { fresh, normalize } from './state.js';
+import { createChapterPicker } from './chapter-picker.js';
 
 const EXAM="2027-05-02";
-const S=[
-{n:"Physics",c:"var(--phy)",g:{"Class 11":["Units & Measurements","Kinematics","Laws of Motion","Work, Energy & Power","Rotational Motion","Gravitation","Properties of Solids & Liquids","Thermodynamics","Kinetic Theory of Gases","Oscillations & Waves"],"Class 12":["Electrostatics","Current Electricity","Magnetic Effects of Current & Magnetism","EMI & Alternating Current","Electromagnetic Waves","Ray & Wave Optics","Dual Nature of Matter & Radiation","Atoms & Nuclei","Electronic Devices"]}},
-{n:"Chemistry",c:"var(--che)",g:{"Physical":["Some Basic Concepts of Chemistry","Structure of Atom","Chemical Thermodynamics","Equilibrium","Redox Reactions","Solutions","Electrochemistry","Chemical Kinetics"],"Inorganic":["Periodic Classification & Properties","Chemical Bonding & Molecular Structure","p-Block Elements","d- & f-Block Elements","Coordination Compounds"],"Organic":["Basic Principles & GOC","Hydrocarbons","Haloalkanes & Haloarenes","Alcohols, Phenols & Ethers","Aldehydes, Ketones & Carboxylic Acids","Amines","Biomolecules"]}},
-{n:"Botany",c:"var(--bot)",g:{"Class 11":["The Living World","Biological Classification","Plant Kingdom","Morphology of Flowering Plants","Anatomy of Flowering Plants","Cell: The Unit of Life","Cell Cycle & Cell Division","Photosynthesis","Respiration in Plants","Plant Growth & Development","Biomolecules"],"Class 12":["Sexual Reproduction in Flowering Plants","Principles of Inheritance & Variation","Molecular Basis of Inheritance","Microbes in Human Welfare","Organisms & Populations","Ecosystem","Biodiversity & Conservation"]}},
-{n:"Zoology",c:"var(--zoo)",g:{"Class 11":["Animal Kingdom","Structural Organisation in Animals","Breathing & Exchange of Gases","Body Fluids & Circulation","Excretory Products & Elimination","Locomotion & Movement","Neural Control & Coordination","Chemical Coordination & Integration"],"Class 12":["Human Reproduction","Reproductive Health","Evolution","Human Health & Disease","Biotechnology: Principles & Processes","Biotechnology & Its Applications"]}}
-];
 const STEPS=["Studied","Revised","PYQs"];
 const $=id=>document.getElementById(id);
-const ALL=S.flatMap((s,si)=>chapters(si).map(c=>({id:s.n+"|"+c,s:si,c})));
-const BY=Object.fromEntries(ALL.map(a=>[a.id,a]));
-function chapters(si){return Object.values(S[si].g).flat()}
 const openT=new Set(),openL=new Set();
 let pw=0,cm=new Date(new Date().getFullYear(),new Date().getMonth(),1),cs=null;
-const fresh=()=>({done:{},dates:{},tab:0,hide:false,grid:false,view:"syl",wk:5,mo:20,tests:[],plan:{},day:{},lec:{}});
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let st=fresh(),query="";
-function normalize(x){
-  if(!x||typeof x!=="object"||Array.isArray(x))throw Error("Invalid tracker data");
-  const n=fresh();
-  for(const a of ALL){for(let k=0;k<3;k++)if(x.done?.[a.id+"|"+k]===true)n.done[a.id+"|"+k]=true;
-    if(/^\d{4}-\d{2}-\d{2}$/.test(x.dates?.[a.id]||''))n.dates[a.id]=x.dates[a.id];
-    const l=x.lec?.[a.id];if(l){const count=Math.max(0,Math.min(60,Math.floor(Number(l.n)||0)));n.lec[a.id]={n:count,d:[...new Set((Array.isArray(l.d)?l.d:[]).filter(v=>Number.isInteger(v)&&v>0&&v<=count))]}}}
-  for(const field of ['plan','day'])for(const [d,ids]of Object.entries(x[field]||{}))if(/^\d{4}-\d{2}-\d{2}$/.test(d)&&Array.isArray(ids))n[field][d]=[...new Set(ids.filter(id=>Object.hasOwn(BY,id)))];
-  n.tests=(Array.isArray(x.tests)?x.tests:[]).filter(t=>t&&/^\d{4}-\d{2}-\d{2}$/.test(t.date)&&/^[a-zA-Z0-9_-]+$/.test(String(t.id))).map(t=>({id:String(t.id),name:String(t.name||'Test').slice(0,160),date:t.date,ch:[...new Set((Array.isArray(t.ch)?t.ch:[]).filter(id=>Object.hasOwn(BY,id)))],chk:Object.fromEntries(Object.entries(t.chk||{}).filter(([id,v])=>Object.hasOwn(BY,id)&&v===true))}));
-  n.tab=Number.isInteger(x.tab)&&x.tab>=0&&x.tab<4?x.tab:0;n.view=['syl','plan','cal'].includes(x.view)?x.view:'syl';n.hide=!!x.hide;n.grid=!!x.grid;
-  for(const k of ['wk','mo'])n[k]=Number.isFinite(x[k])?Math.max(0,Math.min(1000,Math.floor(x[k]))):n[k];return n;
-}
+let st=fresh(),query="",syllabusGroup="all";
+const pickers={};
 
 st=fresh();
 function save(){persistProgress()}
@@ -60,13 +43,16 @@ function render(){
   if(st.view=="syl")renderSyl(pcts);else if(st.view=="plan")renderPlan();else renderCal();
 }
 function lecRow(id){
-  const L=st.lec[id]||{n:0,d:[]},op=openL.has(id);
+  const L=st.lec[id]||{n:LECTURES[id]||0,d:[]},op=openL.has(id);
   return `<div class="lec"><button class="btn" data-lt="${id}">${L.n?`Lectures ${L.d.length}/${L.n}`:"Add lectures"} ${op?"&#9652;":"&#9662;"}</button>${op?`<span class="mute" style="font-size:13px">Total</span><input class="num" type="number" min="0" max="60" value="${L.n}" data-ln="${id}" aria-label="Total lectures">${Array.from({length:L.n},(_,i)=>`<button class="chip" aria-pressed="${L.d.includes(i+1)}" data-ld="${id}|${i+1}">Lec ${i+1}</button>`).join("")}`:""}</div>`;
 }
 function renderSyl(pcts){
   $("tabs").innerHTML=S.map((s,i)=>`<button class="tab" role="tab" style="--c:${s.c}" aria-selected="${i==st.tab}" data-t="${i}"><b>${s.n}</b><span>${pcts[i]}%</span></button>`).join("");
   const s=S[st.tab],ut=upcoming();let h="";
+  const groups=Object.keys(s.g);if(!groups.includes(syllabusGroup))syllabusGroup='all';
+  $('groups').innerHTML=['all',...groups].map(g=>`<button type="button" data-syllabus-group="${g}" aria-pressed="${g===syllabusGroup}">${g==='all'?'All chapters':g}</button>`).join('');
   for(const[g,list]of Object.entries(s.g)){
+    if(syllabusGroup!=='all'&&g!==syllabusGroup)continue;
     let rows="";
     list.forEach(c=>{
       const id=s.n+"|"+c,full=ticks(id)==3;
@@ -101,7 +87,7 @@ function renderPlan(){
   $("wkplan").innerHTML=`<div class="card"><div class="row"><button class="btn" data-wk="-1" aria-label="Previous week">&lsaquo; Prev</button><b>${pw==0?"This week":"Week of "+fmt(wk)}${pw==0?` (from ${fmt(wk)})`:""}</b><button class="btn" data-wk="1" aria-label="Next week">Next &rsaquo;</button></div>
   <p class="mute" style="margin:8px 0 0">${pl.length?`${pd2} of ${pl.length} chosen chapters studied`:"No chapters chosen for this week yet."}</p>${pl.length?bar(pd2,pl.length):""}
   ${pl.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${studied(id)?`<span class="tag good" style="flex:none">Studied</span>`:`<button class="btn" data-k="${id}|0">Mark studied</button>`}<button class="btn" data-rm="${id}" aria-label="Remove">&times;</button></div>`).join("")}</div>`;
-  document.querySelectorAll("#wpick input").forEach(i=>i.checked=pl.includes(i.value));
+  pickers.wpick.setSelected(pl);
   const seen=new Set(),fl=[];
   upcoming().forEach(t=>t.ch.forEach(id=>{if(!studied(id)&&!seen.has(id)){seen.add(id);fl.push(id)}}));
   ALL.forEach(a=>{if(!studied(a.id)&&!seen.has(a.id)){seen.add(a.id);fl.push(a.id)}});
@@ -127,7 +113,7 @@ function renderCal(){
   }
   const dd=new Date(cs+"T00:00:00"),ts=st.tests.filter(t=>t.date==cs),sd=by[cs]||[],wp=st.plan[wsOf(dd)]||[];
   const dp=st.day[cs]||[];
-  document.querySelectorAll("#dpick input").forEach(i=>i.checked=dp.includes(i.value));
+  pickers.dpick.setSelected(dp);
   $("dsum").textContent="Choose chapters for "+fmt(cs);
   const list=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${studied(id)?`<span class="tag good" style="flex:none">Studied</span>`:""}</div>`).join(""):`<div class="mute">Nothing yet.</div>`;
   $("calmain").innerHTML=`<div class="card"><div class="row" style="margin-bottom:10px"><button class="btn" data-cm="-1">&lsaquo; Prev</button><b>${cm.toLocaleDateString("en-IN",{month:"long",year:"numeric"})}</b><button class="btn" data-cm="1">Next &rsaquo;</button></div>
@@ -140,10 +126,18 @@ function renderCal(){
   <div class="grp">Planned for this week</div>${list(wp)}</div>`;
 }
 function buildPicker(){
-  $("wpick").innerHTML=S.map((s,i)=>`<div class="grp" style="color:${s.c}">${s.n}</div><div class="pick">${chapters(i).map(c=>`<label><input type="checkbox" value="${s.n}|${c.replace(/"/g,"&quot;")}"> ${c}</label>`).join("")}</div>`).join("");
-  $("picker").innerHTML=S.map((s,i)=>`<div class="grp" style="color:${s.c}">${s.n}</div><div class="pick">${chapters(i).map(c=>`<label><input type="checkbox" value="${s.n}|${c.replace(/"/g,"&quot;")}"> ${c}</label>`).join("")}</div>`).join("");
+  pickers.wpick=createChapterPicker($('wpick'),'Plan your week');
+  pickers.picker=createChapterPicker($('picker'),'Build your test syllabus');
+  pickers.dpick=createChapterPicker($('dpick'),'Plan your day');
 }
+document.addEventListener('chapterselection',e=>{
+  const id=e.target.id,ids=e.detail.ids;
+  if(id==='wpick'){st.plan[wkISO(pw)]=ids;save();render()}
+  if(id==='dpick'){st.day[cs]=ids;save();render()}
+  if(id==='picker')$('pc').textContent=ids.length;
+});
 document.addEventListener("click",e=>{
+  const group=e.target.closest('[data-syllabus-group]');if(group){syllabusGroup=group.dataset.syllabusGroup;render()}
   const c=e.target.closest("[data-k]"),t=e.target.closest(".tab"),n=e.target.closest(".nav button"),d=e.target.closest("[data-del]");
   if(c){const k=c.dataset.k,id=k.slice(0,k.lastIndexOf("|")),i=k.slice(-1);
     st.done[k]=!st.done[k];
@@ -157,33 +151,30 @@ document.addEventListener("click",e=>{
   if(cd){cs=cd.dataset.cd;render()}
   const lt_=e.target.closest("[data-lt]"),ld_=e.target.closest("[data-ld]");
   if(lt_){const id=lt_.dataset.lt;openL.has(id)?openL.delete(id):openL.add(id);render()}
-  if(ld_){const v=ld_.dataset.ld,i=v.lastIndexOf("|"),id=v.slice(0,i),n=+v.slice(i+1),L=st.lec[id]=st.lec[id]||{n:0,d:[]};L.d=L.d.includes(n)?L.d.filter(x=>x!=n):[...L.d,n];save();render()}
+  if(ld_){const v=ld_.dataset.ld,i=v.lastIndexOf("|"),id=v.slice(0,i),n=+v.slice(i+1),L=st.lec[id]=st.lec[id]||{n:LECTURES[id]||0,d:[]};L.d=L.d.includes(n)?L.d.filter(x=>x!=n):[...L.d,n];save();render()}
   const rd=e.target.closest("[data-rmd]"),mv=e.target.closest("[data-mv]");
   if(rd){const v=rd.dataset.rmd,d=v.slice(0,10),id=v.slice(11);st.day[d]=(st.day[d]||[]).filter(x=>x!=id);save();render()}
   if(mv){const v=mv.dataset.mv,d=v.slice(0,10),id=v.slice(11),k=iso(today());st.day[d]=(st.day[d]||[]).filter(x=>x!=id);st.day[k]=[...new Set([...(st.day[k]||[]),id])];save();render()}
-  if(t){st.tab=+t.dataset.t;save();render()}
+  if(t){st.tab=+t.dataset.t;syllabusGroup="all";save();render()}
   if(n){st.view=n.dataset.v;save();render()}
   if(d&&confirm("Delete this test?")){st.tests=st.tests.filter(x=>x.id!=d.dataset.del);save();render()}
 });
 document.addEventListener("toggle",e=>{const id=e.target.dataset&&e.target.dataset.ot;if(id){e.target.open?openT.add(id):openT.delete(id)}},true);
 document.addEventListener("change",e=>{
   if(e.target.id=="wk"||e.target.id=="mo"){st[e.target.id]=Math.max(0,+e.target.value||0);save();render()}
-  if(e.target.closest("#wpick")){const k=wkISO(pw),v=e.target.value,l=st.plan[k]||[];st.plan[k]=e.target.checked?[...new Set([...l,v])]:l.filter(x=>x!=v);save();render()}
-  if(e.target.dataset.ln){const id=e.target.dataset.ln,n=Math.max(0,Math.min(60,Math.floor(+e.target.value||0))),L=st.lec[id]=st.lec[id]||{n:0,d:[]};L.n=n;L.d=L.d.filter(x=>x<=n);save();render()}
+  if(e.target.dataset.ln){const id=e.target.dataset.ln,n=Math.max(0,Math.min(60,Math.floor(+e.target.value||0))),L=st.lec[id]=st.lec[id]||{n:LECTURES[id]||0,d:[]};L.n=n;L.d=L.d.filter(x=>x<=n);save();render()}
   if(e.target.dataset.tc){const v=e.target.dataset.tc,i=v.indexOf("|"),t=st.tests.find(x=>x.id==v.slice(0,i));if(t){t.chk=t.chk||{};t.chk[v.slice(i+1)]=e.target.checked;save();render()}}
-  if(e.target.closest("#dpick")){const v=e.target.value,l=st.day[cs]||[];st.day[cs]=e.target.checked?[...new Set([...l,v])]:l.filter(x=>x!=v);save();render()}
-  if(e.target.closest("#picker"))$("pc").textContent=document.querySelectorAll("#picker input:checked").length;
 });
 $("addt").onclick=()=>{
-  const name=$("tn").value.trim().slice(0,160),date=$("td").value,ch=[...document.querySelectorAll("#picker input:checked")].map(i=>i.value);
+  const name=$("tn").value.trim().slice(0,160),date=$("td").value,ch=pickers.picker.selected();
   if(!name||!date||!ch.length){alert("Add a test name, a date and at least one chapter.");return}
   st.tests.push({id:String(Date.now()),name,date,ch});save();
-  $("tn").value="";$("td").value="";document.querySelectorAll("#picker input").forEach(i=>i.checked=false);$("pc").textContent=0;render();
+  $("tn").value="";$("td").value="";pickers.picker.reset();$("pc").textContent=0;render();
 };
 $("gv").onclick=()=>{st.grid=!st.grid;save();render()};
 $("hide").checked=st.hide;$("hide").onchange=()=>{st.hide=$("hide").checked;save();render()};
-$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.lec={};save();render()}};
-buildPicker();$("dpick").innerHTML=$("wpick").innerHTML;render();
+$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.lec=fresh().lec;st.legacyProgress={};save();render()}};
+buildPicker();render();
 // Paste your PUBLIC Firebase web config here before sharing/hosting this file.
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDBWFow5KxXw8jqm1lPT1aZRK0Go7YPqkc",
@@ -221,7 +212,7 @@ function friendly(e){
   const messages={'auth/invalid-credential':'Your study ID is incorrect.','auth/user-not-found':'Your study ID is incorrect.','auth/wrong-password':'Your study ID is incorrect.','auth/email-already-in-use':'This ID is already used. Sign in, or start a new account.','auth/credential-already-in-use':'This ID is already used. Start a new account to receive the next number.','auth/network-request-failed':'Check your internet connection and try again.','auth/too-many-requests':'Too many attempts. Wait a little before trying again.','auth/operation-not-allowed':'Account creation is not available yet. Please try again later.','permission-denied':'Your account could not be saved. Please try again later.'};
   return messages[e.code]||e.userMessage||'Something went wrong. Please try again.';
 }
-function clearTransient(){openT.clear();openL.clear();pw=0;cs=null;query='';$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';document.querySelectorAll('#picker input').forEach(i=>i.checked=false);}
+function clearTransient(){openT.clear();openL.clear();pw=0;cs=null;query='';syllabusGroup='all';Object.values(pickers).forEach(p=>p.reset());$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';pickers.picker.reset();}
 async function loadCloud(){
   const generation=authGeneration;if(!user)return;
   ready=false;lock(true);status('Loading your saved progress…');

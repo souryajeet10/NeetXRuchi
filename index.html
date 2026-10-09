@@ -25,15 +25,15 @@
 
 <div id="syl">
   <div class="tabs" role="tablist" id="tabs"></div>
-  <p class="step-caption">Track each chapter: study it, revise it, then practise previous-year questions.</p><div class="tools"><input type="search" id="search" placeholder="Search chapters…" aria-label="Search chapters in selected subject"><span id="subline"></span><button class="btn" id="gv"></button><label><input type="checkbox" id="hide"> Hide finished chapters</label></div>
-  <div id="list"></div>
+  <p class="step-caption">Chapters and lecture counts follow your Yakeen planners. Study, revise, then practise PYQs.</p><div class="tools"><input type="search" id="search" placeholder="Search chapters…" aria-label="Search chapters in selected subject"><span id="subline"></span><button class="btn" id="gv"></button><label><input type="checkbox" id="hide"> Hide finished chapters</label></div>
+  <div id="groups" class="syllabus-groups" aria-label="Filter chapter group"></div><div id="list"></div>
 </div>
 
 <div id="plan" hidden>
   <div id="todayp"></div>
   <div id="targets"></div>
   <div id="wkplan"></div>
-  <div class="card"><details><summary>Choose chapters for the week shown above</summary><div id="wpick"></div></details></div>
+  <div class="card picker-card"><details><summary>Choose chapters for this week</summary><div id="wpick"></div></details></div>
   <div id="focus"></div>
   <h2 style="margin-top:20px">Upcoming tests</h2>
   <div id="tests"></div>
@@ -48,7 +48,7 @@
   </div>
 </div>
 
-<div id="cal" hidden><div id="calmain"></div><div class="card"><details><summary id="dsum">Choose chapters for the selected day</summary><div id="dpick"></div></details></div></div>
+<div id="cal" hidden><div id="calmain"></div><div class="card picker-card"><details><summary id="dsum">Choose chapters for the selected day</summary><div id="dpick"></div></details></div></div>
 
 </div><footer class="foot"><span id="statusbar"><span id="syncmsg" role="status" aria-live="polite"></span> <button class="btn" id="retry" hidden>Retry save</button> <button class="btn" id="cloudreload" hidden>Load cloud version</button></span><span>Your pace. Your progress. Your future.</span><button id="reset">Reset current progress</button></footer>
 <dialog id="authdialog"><button class="close" data-close="authdialog" aria-label="Close">×</button><div class="eyebrow">Your personal study space</div><h2 id="authtitle">Your study account.</h2><p class="notice">Your name, study ID and progress, all together.</p><p id="authmsg" class="notice" role="status"></p>
