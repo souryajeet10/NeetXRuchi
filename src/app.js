@@ -266,7 +266,7 @@ $("addt").onclick=()=>{
 };
 $("gv").onclick=()=>{st.grid=!st.grid;save();render()};
 $("hide").checked=st.hide;$("hide").onchange=()=>{st.hide=$("hide").checked;save();render()};
-$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.dayDone={};st.due={};st.todos=[];st.lec=fresh().lec;st.legacyProgress={};save();render()}};
+if($("reset"))$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.dayDone={};st.due={};st.todos=[];st.lec=fresh().lec;st.legacyProgress={};save();render()}};
 buildPicker();render();
 // Paste your PUBLIC Firebase web config here before sharing/hosting this file.
 const FIREBASE_CONFIG = {
@@ -281,7 +281,7 @@ const FIREBASE_CONFIG = {
 let sdk=null,auth=null,db=null,user=null,ready=true,dirty=false,saving=false,version=0,saveTimer=null,unsubscribe=null;
 let editRevision=0,authGeneration=0,conflict=false;
 function status(message,error=false){$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
-function lock(value){$('workspace').inert=value;$('workspace').style.opacity=value?'.45':'';$('reset').disabled=value;}
+function lock(value){$('workspace').inert=value;$('workspace').style.opacity=value?'.45':'';if($('reset'))$('reset').disabled=value;}
 function persistProgress(){
   if(!user||user.isAnonymous)return
   if(!ready)return;
