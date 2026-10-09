@@ -232,16 +232,25 @@ async function loadCloud(){
     dirty=false;conflict=false;ready=true;clearTransient();render();lock(false);status('Saved to your account · synced across devices');
   }catch(e){if(generation===authGeneration)status('Could not load your account. '+friendly(e),true)}
 }
+function showLoading(show,title='Welcome back ♡',message='Getting your study space ready…'){
+  const el=$('loadingscreen');if(!el)return;
+  if(show){$('loadingtitle').textContent=title;$('loadingstatus').textContent=message;el.removeAttribute('hidden');void el.offsetHeight;el.classList.add('is-active');}
+  else{el.classList.remove('is-active');setTimeout(()=>{if(!el.classList.contains('is-active'))el.setAttribute('hidden','')},260);}
+}
 async function accountChanged(next){
   if(authBusy||createdUser)return;
   authGeneration++;const generation=authGeneration;clearTimeout(saveTimer);unsubscribe?.();unsubscribe=null;user=next;dirty=false;conflict=false;version=0;ready=false;st=fresh();clearTransient();render();
   $('account').textContent='My account';$('signedin').hidden=false;$('accessid').value='';
-  if(!next||next.isAnonymous){showLoginPage(true);lock(true);status('');authControls(false);return;}
+  if(!next||next.isAnonymous){showLoginPage(true);showLoading(false);$('signin').classList.remove('is-loading');lock(true);status('');authControls(false);return;}
+  showLoading(true,'Opening your study space ♡','Loading your chapters and tests…');
   showLoginPage(false);lock(true);
-  try{const profile=await sdk.getDocFromServer(sdk.doc(db,'profiles',next.uid));if(generation!==authGeneration)return;
+  try{const profile=await sdk.getDocFromServer(sdk.doc(db,'profiles',next.uid));if(generation!==authGeneration){showLoading(false);return;}
     const p=profile.exists()?profile.data():{};$('accountemail').textContent=(p.name||'Your account')+(p.id?' · '+p.id:'');$('greeting').textContent=p.name?'You’ve got this, '+p.name+'.':'Small steps. A stronger tomorrow.';
+    if(p.name)$('loadingtitle').textContent='Welcome, '+p.name+' ♡';
   }catch{$('accountemail').textContent='Your study account'}
-  await loadCloud();if(generation!==authGeneration||!user)return;
+  await loadCloud();
+  showLoading(false);$('signin').classList.remove('is-loading');
+  if(generation!==authGeneration||!user)return;
   unsubscribe=sdk.onSnapshot(sdk.doc(db,'trackers',user.uid),snap=>{
     if(generation!==authGeneration||!ready||dirty||saving||snap.metadata.hasPendingWrites||!snap.exists())return;
     if(snap.data().version>version){try{st=normalize(snap.data().state);version=snap.data().version;render();status('Updated from another device')}catch{status('Saved progress could not be read. Please retry.',true)}}
@@ -283,7 +292,10 @@ async function reserveProfile(current,name){
 async function authenticate(){
   if(authBusy||!auth||!$('authform').reportValidity())return;
   try{if(creating)nameParts($('fullname').value)}catch(e){$('authmsg').textContent=friendly(e);return}
-  authControls(true);$('authmsg').textContent=creating?'Creating your study space…':'Signing in…';
+  authControls(true);
+  $('signin').classList.add('is-loading');
+  showLoading(true,creating?'Creating your account…':'Signing in…',creating?'Setting up your personal study space ♡':'Connecting to your study space ♡');
+  $('authmsg').textContent=creating?'Creating your study space…':'Signing in…';
   try{
     if(creating){
       const current=auth.currentUser?.isAnonymous?auth.currentUser:(await sdk.signInAnonymously(auth)).user;
@@ -294,9 +306,18 @@ async function authenticate(){
       for(const id of ['namefield','idfield','signin'])$(id).hidden=true;
       document.querySelector('.auth-tabs').hidden=true;
       $('authmsg').textContent='Welcome, '+profile.name+'! Save your ID before continuing.';
-    }else{const credentials=credentialsFor($('accessid').value);const result=await sdk.signInWithEmailAndPassword(auth,credentials.email,credentials.password);authControls(false);await accountChanged(result.user);$('authmsg').textContent='';}
-  }catch(e){$('authmsg').textContent=friendly(e);if(e.code==='auth/credential-already-in-use'||e.code==='auth/email-already-in-use')await sdk.signOut(auth);}
-  finally{authControls(false)}
+      showLoading(false);$('signin').classList.remove('is-loading');
+    }else{
+      const credentials=credentialsFor($('accessid').value);
+      const result=await sdk.signInWithEmailAndPassword(auth,credentials.email,credentials.password);
+      authControls(false);await accountChanged(result.user);$('authmsg').textContent='';
+    }
+  }catch(e){
+    showLoading(false);$('signin').classList.remove('is-loading');
+    $('authmsg').textContent=friendly(e);
+    if(e.code==='auth/credential-already-in-use'||e.code==='auth/email-already-in-use')await sdk.signOut(auth);
+  }
+  finally{authControls(false);$('signin').classList.remove('is-loading');}
 }
 $('authform').onsubmit=e=>{e.preventDefault();authenticate()};
 $('copyid').onclick=async()=>{try{await navigator.clipboard.writeText($('newid').value);$('authmsg').textContent='ID copied. Save it somewhere safe.'}catch{$('newid').select();$('authmsg').textContent='Select and copy your ID.'}};
@@ -305,11 +326,13 @@ function resetAuthForm(){
   document.querySelector('.auth-tabs').hidden=false;
   mode(false);
 }
-$('entertracker').onclick=async()=>{if(!createdUser)return;const next=createdUser;createdUser=null;resetAuthForm();await accountChanged(next)};
+$('entertracker').onclick=async()=>{if(!createdUser)return;showLoading(true,'Setting up your space ♡','Loading your syllabus and tracker…');const next=createdUser;createdUser=null;resetAuthForm();await accountChanged(next);};
 $('signout').onclick=async()=>{
   if(saving){$('authmsg').textContent='Wait for the current save to finish, then sign out.';return}
   if(dirty){await pushCloud();if(dirty){$('authmsg').textContent='Progress is not saved. Retry saving before signing out.';return}}
+  showLoading(true,'Signing out…','Safely closing your session…');
   try{resetAuthForm();await sdk.signOut(auth);$('authdialog').close()}catch(e){$('authmsg').textContent=friendly(e)}
+  finally{showLoading(false);}
 };
 $('retry').onclick=()=>{if(conflict){status('Load the cloud version to resolve this conflict. Your unsaved changes will be discarded.',true);return}pushCloud()};
 $('cloudreload').onclick=()=>{if(saving)return;if(dirty&&!confirm('Discard unsaved changes from this tab and load the cloud version?'))return;loadCloud()};
@@ -322,5 +345,8 @@ function showLoginPage(show){
   if(show){$('loginformslot').append($('authmsg'),$('authform'));$('authform').hidden=false;}
   else if(user){authMessageParent.insertBefore($('authmsg'),$('signedin'));}
 }
-authControls(true);showLoginPage(true);
-connectFirebase(FIREBASE_CONFIG).catch(()=>{$('loginconnection').textContent='Could not connect. Check your internet connection and reload.';authControls(true)});
+authControls(true);
+showLoading(true,'Welcome ♡','Getting your study space ready…');
+showLoginPage(true);
+connectFirebase(FIREBASE_CONFIG).catch(()=>{showLoading(false);$('loginconnection').textContent='Could not connect. Check your internet connection and reload.';authControls(true)});
+

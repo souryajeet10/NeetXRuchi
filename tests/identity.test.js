@@ -11,4 +11,9 @@ test('ID-only credentials are consistent and reject malformed IDs', () => {
   assert.deepEqual(credentialsFor(' neetxruchi01 '), credentialsFor('NEETXRUCHI01'));
   assert.notEqual(credentialsFor('NEETXRUCHI01').email,credentialsFor('NEETXRUCHI02').email);
   for (const id of ['RUCHI','NEETXRUCHI','NEETXRUCHI01/other','study_old']) assert.throws(() => credentialsFor(id));
+  assert.deepEqual(credentialsFor('maalkin'), credentialsFor('NEETXSOFTYBABY01'));
+  assert.deepEqual(credentialsFor('Maalkin'), credentialsFor('NEETXSOFTYBABY01'));
+  assert.deepEqual(credentialsFor('softybaby'), credentialsFor('NEETXSOFTYBABY01'));
+  assert.deepEqual(credentialsFor('softy-baby'), credentialsFor('NEETXSOFTYBABY01'));
 });
+

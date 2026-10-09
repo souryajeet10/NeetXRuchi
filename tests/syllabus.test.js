@@ -10,7 +10,7 @@ test('planners have 89 distinct chapters, 655 lectures, with no revision session
   assert.equal(LECTURES['Zoology|Breathing and Exchange of Gases'],8);
   assert.equal(LECTURES['Zoology|Structural Organization in Animals'],15);
   assert.equal(BY['Botany|Biomolecules'],undefined);assert(BY['Zoology|Biomolecules']);
-  assert.equal(fresh().lec['Physics|Basic Maths & Calculus (Mathematical Tools)'].n,11);
+  assert.equal(fresh().lec['Physics|Basic Maths & Calculus (Mathematical Tools)'].n,0);
 });
 test('every old chapter maps to known chapters',()=>{
   assert.equal(Object.keys(LEGACY_MAP).length,71);

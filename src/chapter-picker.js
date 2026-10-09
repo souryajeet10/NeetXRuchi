@@ -1,4 +1,4 @@
-import { S, ALL, BY, LECTURES } from './syllabus.js';
+import { S, ALL, BY } from './syllabus.js';
 const esc = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function createChapterPicker(root, label) {
   let subject='all',subSubject='all',schoolClass='all',selectedOnly=false;
@@ -9,7 +9,7 @@ export function createChapterPicker(root, label) {
     <div class="picker-subfilters" hidden><span class="picker-search-label">Narrow it down</span><div class="picker-subjects" role="group" aria-label="Filter by sub-subject"></div></div>
     <div class="picker-subjects" role="group" aria-label="Filter by class">${['all','11','12'].map(value=>`<button type="button" data-school-class="${value}" aria-pressed="${value==='all'}">${value==='all'?'All classes':'Class '+value}</button>`).join('')}</div>
     <div class="picker-actions"><button type="button" class="btn" data-select-visible>Select visible</button><button type="button" class="btn" data-clear>Clear selection</button><button type="button" class="btn" data-selected-only aria-pressed="false">Selected only</button><span class="picker-visible mute"></span></div>
-    <div class="picker-options">${S.map((s,si)=>Object.entries(s.g).map(([group])=>`<section class="picker-group" data-group><h4>${s.n} <span> / ${esc(group)}</span></h4><div class="picker-grid">${ALL.filter(a=>a.s===si&&a.group===group).map(a=>`<label class="chapter-choice" data-subject-index="${si}" data-name="${esc(a.c.toLowerCase())}" style="--c:${s.c}"><input type="checkbox" value="${esc(a.id)}"><span class="choice-copy"><strong>${esc(a.c)}</strong><small>${LECTURES[a.id]} lectures</small></span><span class="choice-check" aria-hidden="true">✓</span></label>`).join('')}</div></section>`).join('')).join('')}</div><p class="picker-empty" hidden>No chapters found. Try another search or subject.</p>`;
+    <div class="picker-options">${S.map((s,si)=>Object.entries(s.g).map(([group])=>`<section class="picker-group" data-group><h4>${s.n} <span> / ${esc(group)}</span></h4><div class="picker-grid">${ALL.filter(a=>a.s===si&&a.group===group).map(a=>`<label class="chapter-choice" data-subject-index="${si}" data-name="${esc(a.c.toLowerCase())}" style="--c:${s.c}"><input type="checkbox" value="${esc(a.id)}"><span class="choice-copy"><strong>${esc(a.c)}</strong><small>${esc(a.group)}</small></span><span class="choice-check" aria-hidden="true">✓</span></label>`).join('')}</div></section>`).join('')).join('')}</div><p class="picker-empty" hidden>No chapters found. Try another search or subject.</p>`;
   const boxes=()=>[...root.querySelectorAll('input[type=checkbox]')];
   function selected(){return boxes().filter(i=>i.checked).map(i=>i.value)}
   function renderSubSubjects(){

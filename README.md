@@ -39,7 +39,7 @@ The chapters and lecture counts follow the supplied Yakeen planners; see [source
 
 ## Development
 
-Node 22 LTS:
+Node 22 or 24:
 
 ```sh
 npm ci
