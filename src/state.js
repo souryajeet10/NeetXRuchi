@@ -1,5 +1,5 @@
 import { ALL, BY, LECTURES, migrateProgress } from './syllabus.js';
-export const fresh=()=>({done:{},dates:{},tab:0,hide:false,grid:false,view:"syl",wk:5,mo:20,tests:[],plan:{},day:{},lec:Object.fromEntries(ALL.map(a=>[a.id,{n:LECTURES[a.id],d:[]}])),syllabusVersion:2,legacyProgress:{}});
+export const fresh=()=>({done:{},dates:{},tab:0,hide:false,grid:true,view:"syl",wk:5,mo:20,tests:[],plan:{},day:{},lec:Object.fromEntries(ALL.map(a=>[a.id,{n:LECTURES[a.id],d:[]}])),syllabusVersion:2,legacyProgress:{}});
 
 export function normalize(x){
   if(!x||typeof x!=="object"||Array.isArray(x))throw Error("Invalid tracker data");

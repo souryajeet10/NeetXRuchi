@@ -37,9 +37,8 @@ function render(){
   let D=0,T=0;const pcts=S.map((_,i)=>{const[d,t]=sub(i);D+=d;T+=t;return Math.round(d/t*100)});
   const all=Math.round(D/T*100);
   $("pct").textContent=all+"%";$("fill").style.width=all+"%";
-  const lv=Object.values(st.lec),lt=lv.reduce((a,l)=>a+l.n,0),ld=lv.reduce((a,l)=>a+l.d.length,0);
   const fin=ALL.filter(a=>ticks(a.id)==3).length;
-  $("cnt").textContent=`${fin} of ${ALL.length} chapters fully done`+(lt?` · ${ld} of ${lt} lectures done`:"");
+  $("cnt").textContent=`${fin} of ${ALL.length} chapters fully done`;
   $("days").textContent=Math.max(0,dleft(EXAM));
   document.querySelectorAll(".nav button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v==st.view));
   $("syl").hidden=st.view!="syl";$("plan").hidden=st.view!="plan";$("cal").hidden=st.view!="cal";
