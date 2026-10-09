@@ -14,6 +14,9 @@ let pw=0,cm=new Date(new Date().getFullYear(),new Date().getMonth(),1),cs=null;
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let st=fresh(),query="",syllabusGroup="all";
 const pickers={};
+let testToastTimer;
+function dismissTestToast(){clearTimeout(testToastTimer);$('testtoast').hidden=true;$('testtoastmessage').textContent=''}
+$('closetesttoast').onclick=dismissTestToast;
 
 st=fresh();
 function save(){persistProgress()}
@@ -170,6 +173,11 @@ $("addt").onclick=()=>{
   if(!name||!date||!ch.length){alert("Add a test name, a date and at least one chapter.");return}
   st.tests.push({id:String(Date.now()),name,date,ch});save();
   $("tn").value="";$("td").value="";pickers.picker.reset();$("pc").textContent=0;render();
+  $('testsyllabus').open=false;$('testmaker').open=false;
+  $('testmakersummary').focus();
+  clearTimeout(testToastTimer);$('testtoast').hidden=false;
+  $('testtoastmessage').textContent='Test added';
+  testToastTimer=setTimeout(dismissTestToast,5000);
 };
 $("gv").onclick=()=>{st.grid=!st.grid;save();render()};
 $("hide").checked=st.hide;$("hide").onchange=()=>{st.hide=$("hide").checked;save();render()};
@@ -212,7 +220,7 @@ function friendly(e){
   const messages={'auth/invalid-credential':'Your study ID is incorrect.','auth/user-not-found':'Your study ID is incorrect.','auth/wrong-password':'Your study ID is incorrect.','auth/email-already-in-use':'This ID is already used. Sign in, or start a new account.','auth/credential-already-in-use':'This ID is already used. Start a new account to receive the next number.','auth/network-request-failed':'Check your internet connection and try again.','auth/too-many-requests':'Too many attempts. Wait a little before trying again.','auth/operation-not-allowed':'Account creation is not available yet. Please try again later.','permission-denied':'Your account could not be saved. Please try again later.'};
   return messages[e.code]||e.userMessage||'Something went wrong. Please try again.';
 }
-function clearTransient(){openT.clear();openL.clear();pw=0;cs=null;query='';syllabusGroup='all';Object.values(pickers).forEach(p=>p.reset());$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';pickers.picker.reset();}
+function clearTransient(){dismissTestToast();$('testmaker').open=false;$('testsyllabus').open=false;openT.clear();openL.clear();pw=0;cs=null;query='';syllabusGroup='all';Object.values(pickers).forEach(p=>p.reset());$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';pickers.picker.reset();}
 async function loadCloud(){
   const generation=authGeneration;if(!user)return;
   ready=false;lock(true);status('Loading your saved progress…');

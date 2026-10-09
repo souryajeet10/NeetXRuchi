@@ -38,13 +38,14 @@
   <h2 style="margin-top:20px">Upcoming tests</h2>
   <div id="tests"></div>
   <div class="card">
-    <h2>Add a test</h2>
+    <details id="testmaker"><summary id="testmakersummary">Add a test</summary>
     <div class="row" style="justify-content:flex-start">
       <input type="text" id="tn" placeholder="Test name, e.g. Mock 1" aria-label="Test name">
       <input type="date" id="td" aria-label="Test date">
     </div>
-    <details><summary>Pick the test syllabus (<span id="pc">0</span> chapters)</summary><div id="picker"></div></details>
+    <details id="testsyllabus"><summary>Pick the test syllabus (<span id="pc">0</span> chapters)</summary><div id="picker"></div></details>
     <button class="btn p" id="addt">Add test</button>
+    </details>
   </div>
 </div>
 
@@ -63,6 +64,7 @@
 <div id="signedin" hidden><p class="account-email" id="accountemail"></p><p class="notice">Your syllabus, plans, tests and lecture progress belong to this account. Use your study ID to sign in again.</p><div class="row"><button class="btn" id="signout">Sign out</button></div></div></dialog>
 
 </main>
+<div id="testtoast" class="test-toast" hidden><span aria-hidden="true">✓</span><span role="status" aria-live="polite" id="testtoastmessage"></span><button type="button" id="closetesttoast" aria-label="Dismiss notification">×</button></div>
 <script type="module" src="/src/app.js"></script>
 </body>
 </html>
