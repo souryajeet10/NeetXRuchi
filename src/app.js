@@ -72,16 +72,17 @@ function renderSyl(pcts){
   $("gv").textContent=st.grid?"≡ List view":"⊞ Grid view";
   const[d,t]=sub(st.tab);$("subline").textContent=`${s.n}: ${d} of ${t} ticks`;
 }
+function listStudied(a,d){
+  return a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span><span class="tag good" style="flex:none">Studied</span><button class="btn" data-unmarkdone="${d}|${id}">Undo</button></div>`).join(""):`<div class="mute">Nothing yet.</div>`;
+}
 function dlist(a,d){
   const old=d<iso(today());
-  return a.length?a.map(id=>{
-    const isDone=(st.dayDone[d]||[]).includes(id);
-    return `<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${isDone?`<span class="tag good" style="flex:none">Studied</span><button class="btn" data-unmarkdone="${d}|${id}">Undo</button>`:`${old?`<span class="tag bad" style="flex:none">Missed</span><button class="btn" data-mv="${d}|${id}">Move to today</button>`:""}<button class="btn" data-markdone="${d}|${id}">Mark studied</button>`}<button class="btn" data-rmd="${d}|${id}" aria-label="Remove">&times;</button></div>`;
-  }).join(""):`<div class="mute">Nothing planned.</div>`;
+  const pending=a.filter(id=>!(st.dayDone[d]||[]).includes(id));
+  return pending.length?pending.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${old?`<span class="tag bad" style="flex:none">Missed</span><button class="btn" data-mv="${d}|${id}">Move to today</button>`:""}<button class="btn" data-markdone="${d}|${id}">Mark studied</button><button class="btn" data-rmd="${d}|${id}" aria-label="Remove">&times;</button></div>`).join(""):`<div class="mute">${a.length?"All planned chapters studied! ♡":"Nothing planned."}</div>`;
 }
 function renderPlan(){
-  const tk=iso(today()),carry=Object.keys(st.day).filter(d=>d<tk).sort().map(d=>[d,st.day[d].filter(id=>!(st.dayDone[d]||[]).includes(id))]).filter(x=>x[1].length);
-  $("todayp").innerHTML=`<div class="card"><h2>Today, ${fmt(tk)}</h2>${dlist(st.day[tk]||[],tk)}${carry.map(([d,l])=>`<div class="grp">Not finished from ${fmt(d)}</div>${dlist(l,d)}`).join("")}<p class="mute" style="margin:10px 0 0;font-size:13px">Plan chapters for any day in the Calendar tab.</p></div>`;
+  const tk=iso(today()),todayStudied=st.dayDone[tk]||[],carry=Object.keys(st.day).filter(d=>d<tk).sort().map(d=>[d,st.day[d].filter(id=>!(st.dayDone[d]||[]).includes(id))]).filter(x=>x[1].length);
+  $("todayp").innerHTML=`<div class="card"><h2>Today, ${fmt(tk)}</h2>${dlist(st.day[tk]||[],tk)}${todayStudied.length?`<div class="grp" style="margin-top:14px">Studied today</div>${listStudied(todayStudied,tk)}`:""}${carry.map(([d,l])=>`<div class="grp">Not finished from ${fmt(d)}</div>${dlist(l,d)}`).join("")}<p class="mute" style="margin:10px 0 0;font-size:13px">Plan chapters for any day in the Calendar tab.</p></div>`;
   const ws=weekStart(),ms=iso(today()).slice(0,7);
   const wd=new Set(Object.keys(st.dayDone||{}).filter(d=>d>=ws).flatMap(d=>st.dayDone[d]||[])).size;
   const md=new Set(Object.keys(st.dayDone||{}).filter(d=>d.startsWith(ms)).flatMap(d=>st.dayDone[d]||[])).size;
@@ -123,7 +124,6 @@ function renderCal(){
   const dp=st.day[cs]||[];
   pickers.dpick.setSelected(dp);
   $("dsum").textContent="Choose chapters for "+fmt(cs);
-  const listStudied=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span><span class="tag good" style="flex:none">Studied</span><button class="btn" data-unmarkdone="${cs}|${id}" aria-label="Remove">&times;</button></div>`).join(""):`<div class="mute">Nothing yet.</div>`;
   const list=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span></div>`).join(""):`<div class="mute">Nothing yet.</div>`;
   $("calmain").innerHTML=`<div class="card"><div class="row" style="margin-bottom:10px"><button class="btn" data-cm="-1">&lsaquo; Prev</button><b>${cm.toLocaleDateString("en-IN",{month:"long",year:"numeric"})}</b><button class="btn" data-cm="1">Next &rsaquo;</button></div>
   <div class="cal">${c}</div><p class="mute" style="margin:10px 0 0;font-size:12px">Orange D = chapters planned for that day. Blue tint and P = planned for that week. &#10003; = chapters studied that day. Tap a day for details.</p></div>
@@ -131,7 +131,7 @@ function renderCal(){
   ${cs==EXAM?'<p><b>NEET 2027 exam day.</b></p>':dleft(cs)>=0?`<p class="mute">${dleft(cs)} days from today</p>`:""}
   ${ts.map(t=>`<div class="grp" style="margin-top:4px">Test: ${esc(t.name)}</div>${list(t.ch)}`).join("")}
   <div class="grp">Planned for this day</div>${dlist(dp,cs)}
-  <div class="grp">Studied this day</div>${listStudied(sd)}
+  <div class="grp">Studied this day</div>${listStudied(sd,cs)}
   <div class="grp">Planned for this week</div>${list(wp)}</div>`;
 }
 function buildPicker(){
