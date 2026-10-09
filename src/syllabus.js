@@ -2,13 +2,22 @@ import course from './course-data.json' with { type: 'json' };
 import legacy from './legacy-chapters.json' with { type: 'json' };
 const names = (key, start = 0, end) => course[key].chapters.slice(start, end).map(c => c.name);
 export const S = [
-  { n: 'Physics', c: 'var(--phy)', g: { 'Foundation': names('physics',0,2), 'Class 11': names('physics',2,17), 'Class 12': names('physics',17) } },
+  { n: 'Physics', c: 'var(--phy)', g: { 'Class 11': names('physics',0,17), 'Class 12': names('physics',17) } },
   { n: 'Chemistry', c: 'var(--che)', g: { 'Physical Chemistry': names('physical'), 'Inorganic Chemistry': names('inorganic'), 'Organic Chemistry': names('organic') } },
   { n: 'Botany', c: 'var(--bot)', g: { 'Class 11': names('botany',0,10), 'Class 12': names('botany',10) } },
   { n: 'Zoology', c: 'var(--zoo)', g: { 'Class 11': names('zoology',0,9), 'Class 12': names('zoology',9) } }
 ];
 export const chapters = si => Object.values(S[si].g).flat();
-export const ALL = S.flatMap((s,si) => Object.entries(s.g).flatMap(([group,items])=>items.map(c=>({ id:s.n+'|'+c, s:si, c, group }))));
+const chemistry11 = new Set([
+  ...names('physical').filter(c=>!['Solutions','Electrochemistry','Chemical Kinetics','Practical Physical Chemistry'].includes(c)),
+  ...names('inorganic',0,2), ...names('organic',0,4),
+  'Purification and Qualitative and Quantitative Analysis'
+]);
+// These combined planner chapters span both school years.
+const chemistryShared = new Set(['The p-Block Elements','Salt Analysis','Practical Physical Chemistry']);
+export const ALL = S.flatMap((s,si) => Object.entries(s.g).flatMap(([group,items])=>items.map(c=>({ id:s.n+'|'+c, s:si, c, group,
+  classes:si===1?(chemistryShared.has(c)?['11','12']:[chemistry11.has(c)?'11':'12']):[group==='Class 11'?'11':'12']
+}))));
 export const BY = Object.fromEntries(ALL.map(a=>[a.id,a]));
 const subjects = { physics:'Physics',physical:'Chemistry',inorganic:'Chemistry',organic:'Chemistry',botany:'Botany',zoology:'Zoology' };
 export const LECTURES = Object.fromEntries(Object.entries(subjects).flatMap(([key,subject])=>course[key].chapters.map(c=>[subject+'|'+c.name,c.lectures])));

@@ -12,7 +12,7 @@ const $=id=>document.getElementById(id);
 const openT=new Set(),openL=new Set();
 let pw=0,cm=new Date(new Date().getFullYear(),new Date().getMonth(),1),cs=null;
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let st=fresh(),query="",syllabusGroup="all";
+let st=fresh(),query="",syllabusGroup="all",syllabusClass="all";
 const pickers={};
 let testToastTimer;
 function dismissTestToast(){clearTimeout(testToastTimer);$('testtoast').hidden=true;$('testtoastmessage').textContent=''}
@@ -53,12 +53,15 @@ function renderSyl(pcts){
   $("tabs").innerHTML=S.map((s,i)=>`<button class="tab" role="tab" style="--c:${s.c}" aria-selected="${i==st.tab}" data-t="${i}"><b>${s.n}</b><span>${pcts[i]}%</span></button>`).join("");
   const s=S[st.tab],ut=upcoming();let h="";
   const groups=Object.keys(s.g);if(!groups.includes(syllabusGroup))syllabusGroup='all';
+  $('groups').hidden=st.tab!==1;
+  document.querySelectorAll('[data-syllabus-class]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.syllabusClass===syllabusClass));
   $('groups').innerHTML=['all',...groups].map(g=>`<button type="button" data-syllabus-group="${g}" aria-pressed="${g===syllabusGroup}">${g==='all'?'All chapters':g}</button>`).join('');
   for(const[g,list]of Object.entries(s.g)){
     if(syllabusGroup!=='all'&&g!==syllabusGroup)continue;
     let rows="";
     list.forEach(c=>{
       const id=s.n+"|"+c,full=ticks(id)==3;
+      if(syllabusClass!=='all'&&!BY[id].classes.includes(syllabusClass))return;
       if(st.hide&&full)return;
       if(query&&!c.toLowerCase().includes(query))return;
       const t=ut.find(t=>t.ch.includes(id));
@@ -140,6 +143,7 @@ document.addEventListener('chapterselection',e=>{
   if(id==='picker')$('pc').textContent=ids.length;
 });
 document.addEventListener("click",e=>{
+  const classFilter=e.target.closest('[data-syllabus-class]');if(classFilter){syllabusClass=classFilter.dataset.syllabusClass;render()}
   const group=e.target.closest('[data-syllabus-group]');if(group){syllabusGroup=group.dataset.syllabusGroup;render()}
   const c=e.target.closest("[data-k]"),t=e.target.closest(".tab"),n=e.target.closest(".nav button"),d=e.target.closest("[data-del]");
   if(c){const k=c.dataset.k,id=k.slice(0,k.lastIndexOf("|")),i=k.slice(-1);
@@ -220,7 +224,7 @@ function friendly(e){
   const messages={'auth/invalid-credential':'Your study ID is incorrect.','auth/user-not-found':'Your study ID is incorrect.','auth/wrong-password':'Your study ID is incorrect.','auth/email-already-in-use':'This ID is already used. Sign in, or start a new account.','auth/credential-already-in-use':'This ID is already used. Start a new account to receive the next number.','auth/network-request-failed':'Check your internet connection and try again.','auth/too-many-requests':'Too many attempts. Wait a little before trying again.','auth/operation-not-allowed':'Account creation is not available yet. Please try again later.','permission-denied':'Your account could not be saved. Please try again later.'};
   return messages[e.code]||e.userMessage||'Something went wrong. Please try again.';
 }
-function clearTransient(){dismissTestToast();$('testmaker').open=false;$('testsyllabus').open=false;openT.clear();openL.clear();pw=0;cs=null;query='';syllabusGroup='all';Object.values(pickers).forEach(p=>p.reset());$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';pickers.picker.reset();}
+function clearTransient(){dismissTestToast();$('testmaker').open=false;$('testsyllabus').open=false;openT.clear();openL.clear();pw=0;cs=null;query='';syllabusGroup='all';syllabusClass='all';Object.values(pickers).forEach(p=>p.reset());$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';pickers.picker.reset();}
 async function loadCloud(){
   const generation=authGeneration;if(!user)return;
   ready=false;lock(true);status('Loading your saved progress…');
