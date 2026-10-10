@@ -442,12 +442,12 @@ function renderCompletionTarget(){
  const dateLabel=target?new Date(target+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'Set your syllabus finish date';
  const examLabel=new Date(EXAM+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
  const countdown=remaining<0?`${Math.abs(remaining)} days past target · edit your goal anytime`:remaining===0?'Your target is today':`${remaining} days to your target`;
- $('completiontarget').innerHTML=`<section class="card completion-banner"><span class="metric-icon" aria-hidden="true">◎</span><div class="completion-copy"><div class="eyebrow">Complete syllabus by</div><h2>${dateLabel}</h2><p class="mute">${target?countdown:'Finish before the exam and leave yourself room to revise.'}</p></div><div class="completion-revision"><b>${target?daysBetween(target,EXAM)+' days for revision':'Plan ahead, study calmly'}</b><small>Exam planning date · ${examLabel}</small></div><button class="btn p" type="button" data-edit-completion>${target?'Edit date':'＋ Set date'}</button></section>`;
+ $('completiontarget').innerHTML=`<section class="card completion-banner"><span class="metric-icon" aria-hidden="true">◎</span><div class="completion-copy"><div class="eyebrow">Complete syllabus by</div><h2>${dateLabel}</h2><p class="mute">${target?countdown:'Finish before the exam and leave yourself room to revise.'}</p></div><div class="completion-revision"><b>${target?daysBetween(target,EXAM)+' days for revision':'Plan ahead, study calmly'}</b><small>Exam date · ${examLabel}</small></div><button class="btn p" type="button" data-edit-completion>${target?'Edit date':'＋ Set date'}</button></section>`;
 }
 function updateCompletionBuffer(){
  const value=$('completiondate').value;
  $('completionerror').textContent='';$('completiondate').setCustomValidity('');
- $('completionbuffer').textContent=value&&!completionTargetError(value,iso(today()))?`${daysBetween(value,EXAM)} days between finishing your syllabus and the exam planning date.`:'';
+ $('completionbuffer').textContent=value&&!completionTargetError(value,iso(today()))?`${daysBetween(value,EXAM)} days between finishing your syllabus and the exam date.`:'';
 }
 document.addEventListener('click',e=>{
  if(!e.target.closest('[data-edit-completion]'))return;
@@ -455,7 +455,7 @@ document.addEventListener('click',e=>{
  $('completiondate').min=iso(today());$('completiondate').max=iso(last);
  $('completiondate').value=st.syllabusCompletionDate||'';
  $('completionclear').hidden=!st.syllabusCompletionDate;
- $('completionexam').textContent='Exam planning date: '+new Date(EXAM+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+ $('completionexam').textContent='Exam date: '+new Date(EXAM+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
  updateCompletionBuffer();$('completiondialog').showModal();$('completiondate').focus();
 });
 $('completiondate').addEventListener('input',updateCompletionBuffer);
