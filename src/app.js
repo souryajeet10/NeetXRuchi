@@ -1,3 +1,4 @@
+import { EXAM_DATE, completionTargetError, daysBetween } from './completion-target.js';
 import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, runTransaction, serverTimestamp, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
@@ -6,7 +7,7 @@ import { S, ALL, BY, chapters } from './syllabus.js';
 import { fresh, normalize } from './state.js';
 import { createChapterPicker } from './chapter-picker.js';
 
-const EXAM="2027-05-02";
+const EXAM=EXAM_DATE;
 const STEPS=["Studied","Revised","PYQs"];
 const $=id=>document.getElementById(id);
 const openT=new Set(),openL=new Set();
@@ -421,6 +422,7 @@ function studyStreak(){
  while((st.dayDone[iso(d)]||[]).length){count++;d.setDate(d.getDate()-1);}return count;
 }
 function renderSyllabusOverview(){
+ renderCompletionTarget();
  const done=ALL.filter(a=>ticks(a.id)===3).length,started=ALL.filter(a=>ticks(a.id)>0&&ticks(a.id)<3).length;
  $('syloverview').innerHTML='<div class="metric-grid syllabus-metrics">'+metric('◎','Overall completion',Math.round(done/ALL.length*100)+'%',`${done} of ${ALL.length} chapters done`)+metric('♧','Total chapters',ALL.length,`across ${S.length} subjects`)+metric('✓','Completed',done,'chapters')+metric('◌','In progress',started,'chapters')+metric('▤','Not started',ALL.length-done-started,'chapters')+'</div>';
  $('sylside').innerHTML='<section class="card"><h2>Subject-wise progress</h2>'+S.map((s,i)=>{const ids=ALL.filter(a=>a.s===i),n=ids.filter(a=>ticks(a.id)===3).length,pct=Math.round(n/ids.length*100);return `<button class="subject-progress" data-subject="${i}"><div class="row"><b>${s.n}</b><small>${n} / ${ids.length} · ${pct}%</small></div><div class="bar"><i style="width:${pct}%"></i></div></button>`}).join('')+'</section><section class="card"><h2>Quick actions</h2><button class="quick-link" data-v="plan">▦ <span>Plan your syllabus<small>Create a study plan for NEET</small></span>→</button><button class="quick-link" data-v="cal">▤ <span>Schedule your next chapter<small>Make time for steady progress</small></span>→</button><button class="quick-link" data-v="dash">◴ <span>Track your progress<small>See your overall study activity</small></span>→</button></section><section class="card"><h2>Syllabus info</h2>'+S.map((s,i)=>`<div class="row info-line"><span>${s.n}</span><b>${ALL.filter(a=>a.s===i).length}</b></div>`).join('')+'</section>';
@@ -434,3 +436,32 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{if(e.target.id==='taskfilter'){taskFilter=e.target.value;renderTodo();}});
 $('rescheduleform').addEventListener('submit',e=>{e.preventDefault();const value=e.currentTarget.dataset.value,from=value.slice(0,10),id=value.slice(11),to=$('rescheduledate').value;if(!to)return;st.day[from]=(st.day[from]||[]).filter(x=>x!==id);st.day[to]=[...new Set([...(st.day[to]||[]),id])];cs=to;cm=new Date(to.slice(0,7)+'-01T00:00:00');save();render();$('rescheduledialog').close();});
+
+function renderCompletionTarget(){
+ const target=st.syllabusCompletionDate,remaining=target?daysBetween(iso(today()),target):0;
+ const dateLabel=target?new Date(target+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'Set your syllabus finish date';
+ const examLabel=new Date(EXAM+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+ const countdown=remaining<0?`${Math.abs(remaining)} days past target · edit your goal anytime`:remaining===0?'Your target is today':`${remaining} days to your target`;
+ $('completiontarget').innerHTML=`<section class="card completion-banner"><span class="metric-icon" aria-hidden="true">◎</span><div class="completion-copy"><div class="eyebrow">Complete syllabus by</div><h2>${dateLabel}</h2><p class="mute">${target?countdown:'Finish before the exam and leave yourself room to revise.'}</p></div><div class="completion-revision"><b>${target?daysBetween(target,EXAM)+' days for revision':'Plan ahead, study calmly'}</b><small>Exam planning date · ${examLabel}</small></div><button class="btn p" type="button" data-edit-completion>${target?'Edit date':'＋ Set date'}</button></section>`;
+}
+function updateCompletionBuffer(){
+ const value=$('completiondate').value;
+ $('completionerror').textContent='';$('completiondate').setCustomValidity('');
+ $('completionbuffer').textContent=value&&!completionTargetError(value,iso(today()))?`${daysBetween(value,EXAM)} days between finishing your syllabus and the exam planning date.`:'';
+}
+document.addEventListener('click',e=>{
+ if(!e.target.closest('[data-edit-completion]'))return;
+ const last=new Date(EXAM+'T00:00:00');last.setDate(last.getDate()-1);
+ $('completiondate').min=iso(today());$('completiondate').max=iso(last);
+ $('completiondate').value=st.syllabusCompletionDate||'';
+ $('completionclear').hidden=!st.syllabusCompletionDate;
+ $('completionexam').textContent='Exam planning date: '+new Date(EXAM+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+ updateCompletionBuffer();$('completiondialog').showModal();$('completiondate').focus();
+});
+$('completiondate').addEventListener('input',updateCompletionBuffer);
+$('completionform').addEventListener('submit',e=>{
+ e.preventDefault();const value=$('completiondate').value,error=completionTargetError(value,iso(today()));
+ if(error){$('completionerror').textContent=error;$('completiondate').setCustomValidity(error);$('completiondate').reportValidity();return;}
+ st.syllabusCompletionDate=value;save();render();$('completiondialog').close();
+});
+$('completionclear').addEventListener('click',()=>{st.syllabusCompletionDate='';save();render();$('completiondialog').close();});

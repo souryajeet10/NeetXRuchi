@@ -1,10 +1,12 @@
+import { normalizeCompletionTarget } from './completion-target.js';
 import { ALL, BY, LECTURES, migrateProgress } from './syllabus.js';
-export const fresh = () => ({ done: {}, dates: {}, tab: 0, hide: false, grid: true, view: "dash", wk: 5, mo: 20, tests: [], plan: {}, day: {}, dayDone: {}, due: {}, todos: [], lec: Object.fromEntries(ALL.map(a => [a.id, { n: 0, d: [] }])), syllabusVersion: 2, legacyProgress: {} });
+export const fresh = () => ({ syllabusCompletionDate: '', done: {}, dates: {}, tab: 0, hide: false, grid: true, view: "dash", wk: 5, mo: 20, tests: [], plan: {}, day: {}, dayDone: {}, due: {}, todos: [], lec: Object.fromEntries(ALL.map(a => [a.id, { n: 0, d: [] }])), syllabusVersion: 2, legacyProgress: {} });
 
 export function normalize(x) {
   if (!x || typeof x !== "object" || Array.isArray(x)) throw Error("Invalid tracker data");
   x = migrateProgress(x);
   const n = fresh();
+  n.syllabusCompletionDate = normalizeCompletionTarget(x.syllabusCompletionDate);
   for (const a of ALL) {
     for (let k = 0; k < 3; k++) if (x.done?.[a.id + "|" + k] === true) n.done[a.id + "|" + k] = true;
     if (/^\d{4}-\d{2}-\d{2}$/.test(x.dates?.[a.id] || '')) n.dates[a.id] = x.dates[a.id];
