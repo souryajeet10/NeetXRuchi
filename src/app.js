@@ -42,7 +42,9 @@ function render(){
   $("days").textContent=Math.max(0,dleft(EXAM));
   document.querySelectorAll(".nav button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v==st.view));
   $("syl").hidden=st.view!="syl";$("plan").hidden=st.view!="plan";$("cal").hidden=st.view!="cal";$("todo").hidden=st.view!="todo";
-  if(st.view=="syl")renderSyl(pcts);else if(st.view=="plan")renderPlan();else if(st.view=="cal")renderCal();else renderTodo();
+  renderShell();
+  $("dash").hidden=st.view!=="dash";
+  if(st.view==="dash")renderDashboard();else if(st.view=="syl")renderSyl(pcts);else if(st.view=="plan")renderPlan();else if(st.view=="cal")renderCal();else renderTodo();
 }
 function lecRow(id){
   const L=st.lec[id]||{n:0,d:[]},op=openL.has(id);
@@ -130,7 +132,7 @@ function renderCal(){
     const dt=new Date(y,m,d),k=iso(dt),pn=(st.plan[wsOf(dt)]||[]).length,tn=st.tests.filter(t=>t.date==k).length,sn=(st.dayDone[k]||[]).length,dn=(st.day[k]||[]).length;
     const dueChs=Object.keys(st.due||{}).filter(id=>st.due[id]===k&&Object.hasOwn(BY,id));
     const un=dueChs.length;
-    c+=`<button class="cd${pn?" pl":""}${k==tk?" td":""}${k==EXAM?" ex":""}${k==cs?" sel":""}" data-cd="${k}"><b>${d}</b>${k==EXAM?'<span class="m e">NEET</span>':""}${tn?`<span class="m t">Test${tn>1?" "+tn:""}</span>`:""}${un?`<span class="m tg" title="${un} target completion date${un>1?'s':''}">🎯${un}</span>`:""}${sn?`<span class="m s">&#10003;${sn}</span>`:""}${dn?`<span class="m d">D${dn}</span>`:""}${pn&&dt.getDay()==1?`<span class="m p">P${pn}</span>`:""}</button>`;
+    c+=`<button class="cd${pn?" pl":""}${k==tk?" td":""}${k==EXAM?" ex":""}${k==cs?" sel":""}" data-cd="${k}"><b>${d}</b>${k==EXAM?'<span class="m e">NEET</span>':""}${tn?`<span class="m t">Test${tn>1?" "+tn:""}</span>`:""}${un?`<span class="m tg" title="${un} target completion date${un>1?'s':''}">🎯${un}</span>`:""}${sn?`<span class="m s">&#10003;${sn}</span>`:""}${(st.day[k]||[]).slice(0,2).map(id=>`<span class="calendar-chapter">${esc(BY[id].c)}</span>`).join("")}${dn>2?`<span class="mute">+${dn-2} more</span>`:""}${pn&&dt.getDay()==1?`<span class="m p">P${pn}</span>`:""}</button>`;
   }
   const dd=new Date(cs+"T00:00:00"),ts=st.tests.filter(t=>t.date==cs),sd=st.dayDone[cs]||[],wp=st.plan[wsOf(dd)]||[];
   const dp=st.day[cs]||[];
@@ -188,7 +190,7 @@ document.addEventListener('chapterselection',e=>{
 document.addEventListener("click",e=>{
   const classFilter=e.target.closest('[data-syllabus-class]');if(classFilter){syllabusClass=classFilter.dataset.syllabusClass;render()}
   const group=e.target.closest('[data-syllabus-group]');if(group){syllabusGroup=group.dataset.syllabusGroup;render()}
-  const c=e.target.closest("[data-k]"),t=e.target.closest(".tab"),n=e.target.closest(".nav button"),d=e.target.closest("[data-del]");
+  const c=e.target.closest("[data-k]"),t=e.target.closest(".tab"),n=e.target.closest("[data-v]"),d=e.target.closest("[data-del]");
   if(c){const k=c.dataset.k;st.done[k]=!st.done[k];save();render()}
   const md=e.target.closest("[data-markdone]"),umd=e.target.closest("[data-unmarkdone]");
   if(md){const v=md.dataset.markdone,i=v.indexOf("|"),date=v.slice(0,i),id=v.slice(i+1);st.dayDone[date]=[...new Set([...(st.dayDone[date]||[]),id])];save();render()}
@@ -328,7 +330,7 @@ async function connectFirebase(config){
   sdk.onAuthStateChanged(auth,accountChanged);
 }
 $('search').addEventListener('input',()=>{query=$('search').value.trim().toLowerCase();render()});
-try{document.documentElement.dataset.theme=localStorage.getItem('neet-theme')||'light'}catch{document.documentElement.dataset.theme='light'}
+try{document.documentElement.dataset.theme=localStorage.getItem('neet-theme')||'dark'}catch{document.documentElement.dataset.theme='dark'}
 $('theme').onclick=()=>{const v=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=v;try{localStorage.setItem('neet-theme',v)}catch{}};
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 $('account').onclick=()=>{$('authmsg').textContent='';$('authdialog').showModal()};
@@ -412,3 +414,25 @@ showLoading(true,'Welcome ♡','Getting your study space ready…');
 showLoginPage(true);
 connectFirebase(FIREBASE_CONFIG).catch(()=>{showLoading(false);$('loginconnection').textContent='Could not connect. Check your internet connection and reload.';authControls(true)});
 
+
+function renderShell(){
+ const titles={dash:['Your study space, at a glance.','Stay consistent. Every chapter brings you closer to NEET.'],syl:['One chapter closer.','Your syllabus, broken into small, achievable steps.'],plan:['A little planning. A lot of progress.','Set your targets, plan your week and prepare for every test.'],cal:['Plan your study calendar.','Schedule your chapters, stay consistent and make every day count.'],todo:['Stay on top of every task.','Break your goals into small steps and make consistent progress towards NEET.']};
+ const [title,subtitle]=titles[st.view]||titles.dash;
+ document.querySelector('.herohead h1').textContent=title;
+ document.querySelector('.herohead .sub').textContent=subtitle;
+ document.querySelector('.top').hidden=st.view!=='syl';
+ document.querySelector('.hero-quote').hidden=st.view!=='dash';
+}
+function renderDashboard(){
+ const tk=iso(today()),ws=weekStart(),month=tk.slice(0,7),completed=ALL.filter(a=>studied(a.id)).length;
+ const weekEnd=new Date(ws+'T00:00:00');weekEnd.setDate(weekEnd.getDate()+6);
+ const wd=new Set(Object.keys(st.dayDone).filter(d=>d>=ws&&d<=iso(weekEnd)).flatMap(d=>st.dayDone[d])).size;
+ const md=new Set(Object.keys(st.dayDone).filter(d=>d.startsWith(month)).flatMap(d=>st.dayDone[d])).size;
+ const percent=Math.round(completed/ALL.length*100),planned=st.day[tk]||[];
+ const progress=(n,t)=>'<div class="bar"><i style="width:'+Math.min(100,n/Math.max(1,t)*100)+'%"></i></div>';
+ const target=(name,n,t)=>'<section class="card target-card"><h2><span>▦</span> '+name+'</h2><p><b>'+n+' of '+t+'</b> chapters</p>'+progress(n,t)+'<div class="row"><span class="mute">Keep making progress</span><button class="btn" data-v="plan">Edit target</button></div></section>';
+ $('dash').innerHTML='<div class="dashboard-stats"><section class="card overall-card"><div class="row"><h2>Overall Progress</h2><button class="text-button" data-v="syl">View details →</button></div><div class="overall-body"><div class="progress-ring" style="--progress:'+percent+'%"><strong>'+percent+'%</strong></div><div><p><b>'+completed+' of '+ALL.length+'</b> chapters studied</p>'+progress(completed,ALL.length)+'<div class="progress-numbers"><span><b>'+ALL.length+'</b>Total chapters</span><span><b>'+completed+'</b>Studied</span><span><b>'+(ALL.length-completed)+'</b>Remaining</span></div></div></div></section>'+target('This Month',md,st.mo)+target('This Week',wd,st.wk)+'</div><div class="dashboard-middle"><div><section class="card"><div class="row"><div><h2>Today’s Plan</h2><p class="mute">'+today().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+'</p></div><button class="btn p" data-v="cal">＋ Add chapter</button></div>'+dlist(planned,tk)+(st.dayDone[tk]?.length?listStudied(st.dayDone[tk],tk):'')+'</section><section class="card"><h2>Weekly Overview <small class="mute">(from '+fmt(ws)+')</small></h2><p class="mute">'+wd+' / '+st.wk+' chapters completed</p>'+progress(wd,st.wk)+'<div class="week-strip">'+Array.from({length:7},(_,i)=>{const d=new Date(ws+'T00:00:00');d.setDate(d.getDate()+i);const k=iso(d);return '<button data-jump-day="'+k+'" class="'+(k===tk?'active':'')+'"><span>'+d.toLocaleDateString('en',{weekday:'short'})+'</span><b>'+d.getDate()+'</b><small>'+(st.day[k]||[]).length+' planned</small></button>'}).join('')+'</div></section></div><section class="card"><div class="row"><h2>Upcoming tests</h2><button class="text-button" data-v="plan">View all →</button></div>'+ (upcoming().slice(0,3).map(t=>'<div class="deadline"><div class="date-badge">'+new Date(t.date+'T00:00:00').getDate()+'<small>'+new Date(t.date+'T00:00:00').toLocaleDateString('en',{month:'short'})+'</small></div><div><b>'+esc(t.name)+'</b><p class="mute">'+t.ch.length+' chapters · '+dleft(t.date)+' days to prepare</p></div></div>').join('')||'<div class="empty">A clear schedule, a fresh start.<br>Add your next test to prepare with purpose.</div>')+'<button class="btn" data-v="plan">＋ Plan a test</button><div class="quiet-note">✧<p>Progress starts with showing up.<br>You’ve got this.</p></div></section></div><section class="card"><div class="row"><div><h2>Recommended Next</h2><p class="mute">A little momentum for your next study session</p></div><button class="text-button" data-v="syl">Browse syllabus →</button></div><div class="recommendations">'+ALL.filter(a=>!studied(a.id)).slice(0,4).map(a=>'<article><span class="book-icon">♧</span><div><b>'+esc(a.c)+'</b><p class="mute">'+S[a.s].n+'</p></div><button class="btn" data-add="'+esc(a.id)+'">'+((st.plan[ws]||[]).includes(a.id)?'✓ Planned':'+ Plan')+'</button></article>').join('')+'</div></section>';
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-jump-day]');if(b){cs=b.dataset.jumpDay;cm=new Date(cs.slice(0,7)+'-01T00:00:00');st.view='cal';save();render();}});
+$('global-search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();if(query){const match=ALL.find(a=>a.c.toLowerCase().includes(query));if(match)st.tab=match.s;st.view='syl';$('search').value=e.target.value;render();}else{$('search').value='';render();}});
+document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('global-search').focus();}});
