@@ -112,11 +112,6 @@ function renderPlan(){
   <p class="mute" style="margin:8px 0 0">${pl.length?`${pd2} of ${pl.length} chosen chapters studied`:"No chapters chosen for this week yet."}</p>${pl.length?bar(pd2,pl.length):""}
   ${pl.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${studied(id)?`<span class="tag good" style="flex:none">Studied</span>`:`<button class="btn" data-k="${id}|0">Mark studied</button>`}<button class="btn" data-rm="${id}" aria-label="Remove">&times;</button></div>`).join("")}</div>`;
   pickers.wpick.setSelected(pl);
-  const seen=new Set(),fl=[];
-  upcoming().forEach(t=>t.ch.forEach(id=>{if(!studied(id)&&!seen.has(id)){seen.add(id);fl.push(id)}}));
-  ALL.forEach(a=>{if(!studied(a.id)&&!seen.has(a.id)){seen.add(a.id);fl.push(a.id)}});
-  const top=fl.slice(0,Math.max(0,st.wk-wd));
-  $("focus").innerHTML=`<div class="card"><h2>Suggested next</h2><div class="mute" style="margin-bottom:6px">Chapters for upcoming tests come first, then syllabus order.</div>${top.length?top.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}<span class="mute"> · ${S[BY[id].s].n}</span></span><button class="btn" data-k="${id}|0">Mark studied</button><button class="btn" data-add="${id}">+ Plan</button></div>`).join(""):`<div class="empty">Weekly target met. Rest or revise.</div>`}</div>`;
   const ut=upcoming();
   $("tests").innerHTML=ut.length?ut.map(t=>{
     const d=dleft(t.date),w=Math.max(1,Math.ceil(d/7)),ck=t.chk||{},pd=t.ch.filter(id=>!ck[id]),
