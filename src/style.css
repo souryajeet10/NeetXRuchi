@@ -127,6 +127,8 @@ body{background:radial-gradient(ellipse at 95% 0%,#f9dce955,transparent 45%),var
 @media(max-width:640px){.picker-card{padding:16px}.picker-grid,.revision-grid{grid-template-columns:1fr}.picker-heading{align-items:flex-start}.picker-heading h3{font-size:21px}.picker-heading .eyebrow{font-size:8px}.selection-count{font-size:11px;padding:7px 9px}.picker-subjects{gap:6px}.picker-subjects button{padding:8px 10px;font-size:11px}.picker-options{max-height:420px}.picker-visible{flex-basis:100%;margin-left:0}.chapter-choice{min-height:70px}.syllabus-groups button{font-size:11px;padding:8px 12px}}
 
 /* Loading screen & Auth button spinner */
+.action-loading{position:fixed;top:max(16px,env(safe-area-inset-top));right:16px;z-index:110;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);box-shadow:0 6px 24px #652c4c20;font-size:13px;pointer-events:none}
+.action-spinner{width:18px;height:18px;flex:none;border:2px solid var(--line);border-top-color:var(--ok);border-radius:50%;animation:loadSpin .7s linear infinite}
 .loading-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease}
 .loading-screen.is-active{opacity:1;visibility:visible}
 .loading-box{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:38px 32px 34px;width:min(380px,calc(100vw - 36px));text-align:center;box-shadow:0 24px 60px #b5558418,0 4px 16px #0000000a;animation:loadPop .3s cubic-bezier(0.16,1,0.3,1)}
@@ -146,18 +148,24 @@ body{background:radial-gradient(ellipse at 95% 0%,#f9dce955,transparent 45%),var
 @keyframes loadBar{0%{left:-45%;width:30%}50%{left:35%;width:50%}100%{left:100%;width:35%}}
 
 /* Tab switch animation and To-Do styling */
-#syl:not([hidden]), #plan:not([hidden]), #cal:not([hidden]), #todo:not([hidden]) {
-  animation: tabSwitchIn .28s cubic-bezier(0.16, 1, 0.3, 1) both;
+#dash:not([hidden]), #syl:not([hidden]), #plan:not([hidden]), #cal:not([hidden]), #todo:not([hidden]) {
+  animation: tabSwitchIn .2s ease-out;
 }
 @keyframes tabSwitchIn {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.995);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  #dash, #syl, #plan, #cal, #todo,
+  .loading-box, .loading-ring, .loading-flower, .loading-bar-fill,
+  .auth-submit.is-loading::after, .action-spinner { animation: none !important; }
+  .loading-screen { transition: none; }
 }
 .nav button {
   transition: color .2s ease, border-color .2s ease, transform .15s ease;

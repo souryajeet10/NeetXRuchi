@@ -26,7 +26,7 @@ export function nameParts(input) {
 export function credentialsFor(input) {
   const resolved = resolveId(input);
   const id = String(resolved).trim().toUpperCase();
-  if (!/^NEETX[A-Z]{2,24}[0-9]{2,9}$/.test(id)) throw invalid('Enter your study ID, for example NEETXRUCHI01.');
+  if (!/^NEETX[A-Z]{2,24}[0-9]{2,9}$/.test(id)) throw invalid('Enter your ID.');
   // ID-only access, as requested. This deterministic credential is not a second secret.
   // Knowing/guessing an ID grants access; do not store sensitive information here.
   return { email: id.toLowerCase() + '@users.neetxruchi.invalid', password: id + '!nX'  };

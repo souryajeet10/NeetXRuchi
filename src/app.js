@@ -1,8 +1,8 @@
 import { EXAM_DATE, completionTargetError, daysBetween } from './completion-target.js';
 import { initializeApp } from 'firebase/app';
-import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, runTransaction, serverTimestamp, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
-import { nameParts, credentialsFor } from './identity.js';
+import { credentialsFor } from './identity.js';
 import { S, ALL, BY, chapters } from './syllabus.js';
 import { fresh, normalize } from './state.js';
 import { createChapterPicker } from './chapter-picker.js';
@@ -239,29 +239,29 @@ const FIREBASE_CONFIG = {
 };
 let sdk=null,auth=null,db=null,user=null,ready=true,dirty=false,saving=false,version=0,saveTimer=null,unsubscribe=null;
 let editRevision=0,authGeneration=0,conflict=false;
-function status(message,error=false){$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
+function status(message,error=false,busy=false){$('actionloading').hidden=!busy;$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
 function lock(value){$('workspace').inert=value;$('workspace').style.opacity=value?'.45':'';if($('reset'))$('reset').disabled=value;}
 function persistProgress(){
   if(!user||user.isAnonymous)return
   if(!ready)return;
-  dirty=true;editRevision++;status('Changes waiting to sync…');clearTimeout(saveTimer);saveTimer=setTimeout(pushCloud,700);
+  dirty=true;editRevision++;status('Changes waiting to sync…',false,true);clearTimeout(saveTimer);saveTimer=setTimeout(pushCloud,700);
 }
 async function pushCloud(){
   if(!user||!ready||!dirty||saving||conflict)return;
   saving=true;const uid=user.uid,generation=authGeneration,revision=editRevision,payload=JSON.parse(JSON.stringify(st)),expected=version;
-  status('Saving to your account…');
+  status('Saving to your account…',false,true);
   try{
     const ref=sdk.doc(db,'trackers',uid);
     await sdk.runTransaction(db,async tx=>{const snap=await tx.get(ref),current=snap.exists()?snap.data().version:0;
       if(current!==expected)throw Error('SYNC_CONFLICT');
       tx.set(ref,{state:payload,version:expected+1,updatedAt:sdk.serverTimestamp()});});
     if(generation!==authGeneration)return;
-    version=expected+1;dirty=revision!==editRevision;status(dirty?'Saving latest changes…':'Saved to your account · synced across devices');
+    version=expected+1;dirty=revision!==editRevision;status(dirty?'Saving latest changes…':'Saved to your account · synced across devices',false,dirty);
   }catch(e){if(generation!==authGeneration)return;conflict=e.message==='SYNC_CONFLICT';status(conflict?'Another device changed your progress. Load the cloud version before making more changes.':'Cloud save failed. Keep this tab open and retry. '+friendly(e),true)}
   finally{saving=false;$('retry').hidden=!dirty;if(dirty&&!conflict&&editRevision!==revision)saveTimer=setTimeout(pushCloud,700);}
 }
 function friendly(e){
-  const messages={'auth/invalid-credential':'Your study ID is incorrect.','auth/user-not-found':'Your study ID is incorrect.','auth/wrong-password':'Your study ID is incorrect.','auth/email-already-in-use':'This ID is already used. Sign in, or start a new account.','auth/credential-already-in-use':'This ID is already used. Start a new account to receive the next number.','auth/network-request-failed':'Check your internet connection and try again.','auth/too-many-requests':'Too many attempts. Wait a little before trying again.','auth/operation-not-allowed':'Account creation is not available yet. Please try again later.','permission-denied':'Your account could not be saved. Please try again later.'};
+  const messages={'auth/invalid-credential':'Your study ID is incorrect.','auth/user-not-found':'Your study ID is incorrect.','auth/wrong-password':'Your study ID is incorrect.','auth/email-already-in-use':'This ID is already used. Please sign in.','auth/credential-already-in-use':'This ID is already used. Please sign in.','auth/network-request-failed':'Check your internet connection and try again.','auth/too-many-requests':'Too many attempts. Wait a little before trying again.','auth/operation-not-allowed':'New account creation is not allowed. Please ask Maalkin Softybaby.','permission-denied':'Your account could not be saved. Please try again later.'};
   return messages[e.code]||e.userMessage||'Something went wrong. Please try again.';
 }
 function clearTransient(){dismissTestToast();$('testmaker').open=false;$('testsyllabus').open=false;openT.clear();openL.clear();pw=0;cs=null;query='';syllabusGroup='all';syllabusClass='all';Object.values(pickers).forEach(p=>p.reset());$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';pickers.picker.reset();}
@@ -279,7 +279,7 @@ function showLoading(show,title='Welcome back ♡',message='Getting your study s
   else{el.classList.remove('is-active');setTimeout(()=>{if(!el.classList.contains('is-active'))el.setAttribute('hidden','')},260);}
 }
 async function accountChanged(next){
-  if(authBusy||createdUser)return;
+  if(authBusy)return;
   authGeneration++;const generation=authGeneration;clearTimeout(saveTimer);unsubscribe?.();unsubscribe=null;user=next;dirty=false;conflict=false;version=0;ready=false;st=fresh();clearTransient();render();
   $('account').textContent='My account';$('signedin').hidden=false;$('accessid').value='';
   if(!next||next.isAnonymous){showLoginPage(true);showLoading(false);$('signin').classList.remove('is-loading');lock(true);status('');authControls(false);return;}
@@ -298,7 +298,7 @@ async function accountChanged(next){
   },()=>status('Live updates disconnected. Check your connection.',true));
 }
 async function connectFirebase(config){
-  sdk={initializeApp,getAuth,setPersistence,browserSessionPersistence,onAuthStateChanged,signInAnonymously,linkWithCredential,EmailAuthProvider,signInWithEmailAndPassword,signOut,getFirestore,doc,getDocFromServer,runTransaction,serverTimestamp,onSnapshot};
+  sdk={initializeApp,getAuth,setPersistence,browserSessionPersistence,onAuthStateChanged,signInWithEmailAndPassword,signOut,getFirestore,doc,getDocFromServer,runTransaction,serverTimestamp,onSnapshot};
   const emulating=import.meta.env.DEV&&import.meta.env.VITE_USE_EMULATORS==='true';
   const app=sdk.initializeApp(emulating?{...config,projectId:'demo-neetxruchi',apiKey:'demo-key'}:config);auth=sdk.getAuth(app);db=sdk.getFirestore(app);
   if(emulating){connectAuthEmulator(auth,'http://127.0.0.1:9099',{disableWarnings:true});connectFirestoreEmulator(db,'127.0.0.1',8080)}
@@ -311,63 +311,29 @@ try{document.documentElement.dataset.theme=localStorage.getItem('neet-theme')||'
 $('theme').onclick=()=>{const v=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=v;try{localStorage.setItem('neet-theme',v)}catch{}};
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 $('account').onclick=()=>{$('authmsg').textContent='';$('authdialog').showModal()};
-let authBusy=false,creating=false,createdUser=null;
-function authControls(busy){authBusy=busy;for(const id of ['signin','signup','signinmode','accessid','fullname'])$(id).disabled=busy||!auth;}
-function mode(create){
-  if(authBusy)return;creating=create;$('namefield').hidden=!create;$('idfield').hidden=create;
-  $('fullname').required=create;$('accessid').required=!create;
-  $('signin').textContent=create?'Create my account':'Sign in';
-  $('signup').classList.toggle('p',create);$('signinmode').classList.toggle('p',!create);$('signup').setAttribute('aria-pressed',create);$('signinmode').setAttribute('aria-pressed',!create);$('authmsg').textContent='';
-}
-$('signup').onclick=()=>mode(true);$('signinmode').onclick=()=>mode(false);
-async function reserveProfile(current,name){
-  const {displayName,stem}=nameParts(name),profileRef=sdk.doc(db,'profiles',current.uid),counterRef=sdk.doc(db,'nameCounters',stem);
-  return sdk.runTransaction(db,async tx=>{
-    const profile=await tx.get(profileRef);if(profile.exists())return profile.data();
-    const counter=await tx.get(counterRef),serial=(counter.exists()?counter.data().serial:0)+1;
-    if(serial>999999999)throw {userMessage:'Please use another name.'};
-    const result={name:displayName,stem,serial,id:'NEETX'+stem+String(serial).padStart(2,'0')};
-    tx.set(counterRef,{serial,lastUid:current.uid});tx.set(profileRef,result);return result;
-  });
-}
+let authBusy=false;
+function authControls(busy){authBusy=busy;for(const id of ['signin','accessid'])$(id).disabled=busy||!auth;}
+$('signup').onclick=()=>{$('authmsg').textContent=$('signupnotice').textContent;};
+$('signinmode').onclick=()=>{$('authmsg').textContent='';$('accessid').focus();};
 async function authenticate(){
   if(authBusy||!auth||!$('authform').reportValidity())return;
-  try{if(creating)nameParts($('fullname').value)}catch(e){$('authmsg').textContent=friendly(e);return}
   authControls(true);
   $('signin').classList.add('is-loading');
-  showLoading(true,creating?'Creating your account…':'Signing in…',creating?'Setting up your personal study space ♡':'Connecting to your study space ♡');
-  $('authmsg').textContent=creating?'Creating your study space…':'Signing in…';
+  showLoading(true,'Signing in…','Connecting to your study space ♡');
+  $('authmsg').textContent='Signing in…';
   try{
-    if(creating){
-      const current=auth.currentUser?.isAnonymous?auth.currentUser:(await sdk.signInAnonymously(auth)).user;
-      const profile=await reserveProfile(current,$('fullname').value);
-      const credentials=credentialsFor(profile.id);
-      const result=await sdk.linkWithCredential(current,sdk.EmailAuthProvider.credential(credentials.email,credentials.password));
-      createdUser=result.user;$('newid').value=profile.id;$('newidpanel').hidden=false;
-      for(const id of ['namefield','idfield','signin'])$(id).hidden=true;
-      document.querySelector('.auth-tabs').hidden=true;
-      $('authmsg').textContent='Welcome, '+profile.name+'! Save your ID before continuing.';
-      showLoading(false);$('signin').classList.remove('is-loading');
-    }else{
-      const credentials=credentialsFor($('accessid').value);
-      const result=await sdk.signInWithEmailAndPassword(auth,credentials.email,credentials.password);
-      authControls(false);await accountChanged(result.user);$('authmsg').textContent='';
-    }
+    const credentials=credentialsFor($('accessid').value);
+    const result=await sdk.signInWithEmailAndPassword(auth,credentials.email,credentials.password);
+    authControls(false);await accountChanged(result.user);$('authmsg').textContent='';
   }catch(e){
-    showLoading(false);$('signin').classList.remove('is-loading');
-    $('authmsg').textContent=friendly(e);
-    if(e.code==='auth/credential-already-in-use'||e.code==='auth/email-already-in-use')await sdk.signOut(auth);
+    showLoading(false);$('authmsg').textContent=friendly(e);
   }
   finally{authControls(false);$('signin').classList.remove('is-loading');}
 }
 $('authform').onsubmit=e=>{e.preventDefault();authenticate()};
-$('copyid').onclick=async()=>{try{await navigator.clipboard.writeText($('newid').value);$('authmsg').textContent='ID copied. Save it somewhere safe.'}catch{$('newid').select();$('authmsg').textContent='Select and copy your ID.'}};
 function resetAuthForm(){
-  $('newidpanel').hidden=true;$('newid').value='';$('signin').hidden=false;
-  document.querySelector('.auth-tabs').hidden=false;
-  mode(false);
+  $('authform').reset();$('authmsg').textContent='';
 }
-$('entertracker').onclick=async()=>{if(!createdUser)return;showLoading(true,'Setting up your space ♡','Loading your syllabus and tracker…');const next=createdUser;createdUser=null;resetAuthForm();await accountChanged(next);};
 $('signout').onclick=async()=>{
   if(saving){$('authmsg').textContent='Wait for the current save to finish, then sign out.';return}
   if(dirty){await pushCloud();if(dirty){$('authmsg').textContent='Progress is not saved. Retry saving before signing out.';return}}
