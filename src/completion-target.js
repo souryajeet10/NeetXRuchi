@@ -13,7 +13,7 @@ export function normalizeCompletionTarget(value) {
 
 export function completionTargetError(value, today) {
   if (!isValidDate(value)) return 'Choose a valid syllabus completion date.';
-  if (value >= EXAM_DATE) return 'Choose a date before the exam date to leave time for revision.';
+  if (value >= EXAM_DATE) return 'Choose a date before the tentative exam date to leave time for revision.';
   if (value < today) return 'Choose today or a future date for your new target.';
   return '';
 }
