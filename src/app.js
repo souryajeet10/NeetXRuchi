@@ -327,10 +327,12 @@ async function authenticate(){
     authControls(false);await accountChanged(result.user);$('authmsg').textContent='';
   }catch(e){
     showLoading(false);$('authmsg').textContent=friendly(e);
+    if(['auth/invalid-study-id','auth/invalid-credential','auth/user-not-found','auth/wrong-password','auth/invalid-email'].includes(e.code))$('wrongiddialog').showModal();
   }
   finally{authControls(false);$('signin').classList.remove('is-loading');}
 }
 $('authform').onsubmit=e=>{e.preventDefault();authenticate()};
+$('wrongiddialog').addEventListener('close',()=>{$('accessid').focus();$('accessid').select();});
 function resetAuthForm(){
   $('authform').reset();$('authmsg').textContent='';
 }

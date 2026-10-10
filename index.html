@@ -76,6 +76,13 @@
 <div id="signedin" hidden><p class="account-email" id="accountemail"></p><p class="notice">Your syllabus, plans, tests and lecture progress belong to this account. Use your study ID to sign in again.</p><div class="row"><button class="btn" id="signout">Sign out</button></div></div></dialog>
 <dialog id="duedialog"><button class="close" data-close="duedialog" aria-label="Close">×</button><div class="eyebrow">Target completion date</div><h2 id="duename">Set Target Date</h2><p class="notice" id="duesub">Assign a target date to finish studying this chapter.</p><form id="dueform"><label for="dueinput">Target date</label><input type="date" id="dueinput" required><div class="row"><button class="btn" type="button" id="cleardue">Clear date</button><button class="btn p" type="submit">Save target date</button></div></form></dialog>
 </main>
+<dialog id="wrongiddialog" class="wrong-id-dialog" aria-labelledby="wrongidtitle" aria-describedby="wrongidmessage">
+<button class="close" type="button" data-close="wrongiddialog" aria-label="Close popup" autofocus>×</button>
+<h2 id="wrongidtitle">NIKAL LAWDE 😡</h2>
+<p id="wrongidmessage">This is only for Softy Baby.</p>
+<img src="/images/wrong-id.png" alt="Pehli fursat me nikal meme" width="1280" height="720" loading="lazy">
+<button class="btn p" type="button" data-close="wrongiddialog">okay nikal raha</button>
+</dialog>
 <div id="testtoast" class="test-toast" hidden><span aria-hidden="true">✓</span><span role="status" aria-live="polite" id="testtoastmessage"></span><button type="button" id="closetesttoast" aria-label="Dismiss notification">×</button></div>
 <div id="actionloading" class="action-loading" role="status" aria-live="polite" hidden><span class="action-spinner" aria-hidden="true"></span><span>Saving your changes…</span></div>
 <script type="module" src="/src/app.js"></script>
