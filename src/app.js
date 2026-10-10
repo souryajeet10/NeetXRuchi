@@ -12,6 +12,7 @@ const $=id=>document.getElementById(id);
 const openT=new Set(),openL=new Set();
 let pw=0,cm=new Date(new Date().getFullYear(),new Date().getMonth(),1),cs=null;
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let taskFilter='all';
 let st=fresh(),query="",syllabusGroup="all",syllabusClass="all";
 const pickers={};
 let testToastTimer;
@@ -51,6 +52,7 @@ function lecRow(id){
   return `<div class="lec"><button class="btn" data-lt="${id}">${L.n?`Lectures ${L.d.length}/${L.n}`:"Add lectures"} ${op?"&#9652;":"&#9662;"}</button>${op?`<span class="mute" style="font-size:13px">Total</span><input class="num" type="number" min="0" max="60" value="${L.n}" data-ln="${id}" aria-label="Total lectures">${Array.from({length:L.n},(_,i)=>`<button class="chip" aria-pressed="${L.d.includes(i+1)}" data-ld="${id}|${i+1}">Lec ${i+1}</button>`).join("")}`:""}</div>`;
 }
 function renderSyl(pcts){
+  renderSyllabusOverview();
   $("tabs").innerHTML=S.map((s,i)=>`<button class="tab" role="tab" style="--c:${s.c}" aria-selected="${i==st.tab}" data-t="${i}"><b>${s.n}</b><span>${pcts[i]}%</span></button>`).join("");
   const s=S[st.tab],ut=upcoming();let h="";
   const groups=Object.keys(s.g);if(!groups.includes(syllabusGroup))syllabusGroup='all';
@@ -125,55 +127,34 @@ function renderPlan(){
     <div style="margin-top:8px"><button class="btn" data-del="${t.id}">Delete test</button></div></div>`}).join(""):`<div class="card empty">No upcoming tests. Add one below to match its syllabus with your plan.</div>`;
 }
 function renderCal(){
-  const y=cm.getFullYear(),m=cm.getMonth(),off=(new Date(y,m,1).getDay()+6)%7,n=new Date(y,m+1,0).getDate(),tk=iso(today());
-  if(!cs)cs=tk;
-  let c=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<div class="h">${d}</div>`).join("")+"<div></div>".repeat(off);
-  for(let d=1;d<=n;d++){
-    const dt=new Date(y,m,d),k=iso(dt),pn=(st.plan[wsOf(dt)]||[]).length,tn=st.tests.filter(t=>t.date==k).length,sn=(st.dayDone[k]||[]).length,dn=(st.day[k]||[]).length;
-    const dueChs=Object.keys(st.due||{}).filter(id=>st.due[id]===k&&Object.hasOwn(BY,id));
-    const un=dueChs.length;
-    c+=`<button class="cd${pn?" pl":""}${k==tk?" td":""}${k==EXAM?" ex":""}${k==cs?" sel":""}" data-cd="${k}"><b>${d}</b>${k==EXAM?'<span class="m e">NEET</span>':""}${tn?`<span class="m t">Test${tn>1?" "+tn:""}</span>`:""}${un?`<span class="m tg" title="${un} target completion date${un>1?'s':''}">🎯${un}</span>`:""}${sn?`<span class="m s">&#10003;${sn}</span>`:""}${(st.day[k]||[]).slice(0,2).map(id=>`<span class="calendar-chapter">${esc(BY[id].c)}</span>`).join("")}${dn>2?`<span class="mute">+${dn-2} more</span>`:""}${pn&&dt.getDay()==1?`<span class="m p">P${pn}</span>`:""}</button>`;
-  }
-  const dd=new Date(cs+"T00:00:00"),ts=st.tests.filter(t=>t.date==cs),sd=st.dayDone[cs]||[],wp=st.plan[wsOf(dd)]||[];
-  const dp=st.day[cs]||[];
-  const dueForDay=Object.keys(st.due||{}).filter(id=>st.due[id]===cs&&Object.hasOwn(BY,id));
-  pickers.dpick.setSelected(dp);
-  $("dsum").textContent="Choose chapters for "+fmt(cs);
-  const list=a=>a.length?a.map(id=>`<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span></div>`).join(""):`<div class="mute">Nothing yet.</div>`;
-  const listDue=a=>a.length?a.map(id=>{
-    const isDone=studied(id);
-    return `<div class="f" style="--c:${S[BY[id].s].c}"><i></i><span>${BY[id].c}${chip(id)}</span>${isDone?`<span class="tag good" style="flex:none">Studied</span>`:`<span class="tag ${dleft(cs)<0?'bad':'good'}" style="flex:none">${dleft(cs)<0?'Overdue':'Target'}</span><button class="btn" data-k="${id}|0" style="font-size:11px;padding:3px 8px">Mark studied</button>`}<button class="btn" data-setdue="${id}" title="Edit target date" style="font-size:11px;padding:3px 8px">✎</button></div>`;
-  }).join(""):`<div class="mute">Nothing yet.</div>`;
-  $("calmain").innerHTML=`<div class="card"><div class="row" style="margin-bottom:10px"><button class="btn" data-cm="-1">&lsaquo; Prev</button><b>${cm.toLocaleDateString("en-IN",{month:"long",year:"numeric"})}</b><button class="btn" data-cm="1">Next &rsaquo;</button></div>
-  <div class="cal">${c}</div><p class="mute" style="margin:10px 0 0;font-size:12px">Orange D = chapters planned for that day. Blue tint and P = planned for that week. &#10003; = chapters studied that day. 🎯 = target completion due date. Tap a day for details.</p></div>
-  <div class="card"><h2>${dd.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</h2>
-  ${cs==EXAM?'<p><b>NEET 2027 exam day.</b></p>':dleft(cs)>=0?`<p class="mute">${dleft(cs)} days from today</p>`:""}
-  ${ts.map(t=>`<div class="grp" style="margin-top:4px">Test: ${esc(t.name)}</div>${list(t.ch)}`).join("")}
-  ${dueForDay.length?`<div class="grp" style="margin-top:4px">🎯 Target completion dates (${dueForDay.length})</div>${listDue(dueForDay)}`:""}
-  <div class="grp">Planned for this day</div>${dlist(dp,cs)}
-  <div class="grp">Studied this day</div>${listStudied(sd,cs)}
-  <div class="grp">Planned for this week</div>${list(wp)}</div>`;
+ const y=cm.getFullYear(),m=cm.getMonth(),tk=iso(today()),ws=weekStart(),end=new Date(ws+'T00:00:00');end.setDate(end.getDate()+6);
+ if(!cs)cs=tk;
+ const weekKeys=Object.keys(st.day).filter(d=>d>=ws&&d<=iso(end));
+ const planned=new Set([...weekKeys.flatMap(d=>st.day[d]),...(st.plan[ws]||[])]).size;
+ const completed=new Set(Object.keys(st.dayDone).filter(d=>d>=ws&&d<=iso(end)).flatMap(d=>st.dayDone[d])).size;
+ const start=new Date(y,m,1);start.setDate(start.getDate()-(start.getDay()+6)%7);
+ const days=Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(d.getDate()+i);return d;});
+ const headers=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="h">${d}</div>`).join('');
+ const cells=days.map(date=>{const key=iso(date),ids=st.day[key]||[],tests=st.tests.filter(t=>t.date===key);return `<button class="cd ${date.getMonth()!==m?'outside':''} ${key===tk?'td':''} ${key===cs?'sel':''}" data-cd="${key}" aria-label="${date.toLocaleDateString('en-IN',{dateStyle:'full'})}, ${ids.length} planned chapters" aria-pressed="${key===cs}"><b>${date.getDate()}</b>${ids.slice(0,2).map(id=>`<span class="calendar-chapter"><i></i>${esc(BY[id].c)}${(st.dayDone[key]||[]).includes(id)?' ✓':''}</span>`).join('')}${ids.length>2?`<small>+${ids.length-2} more</small>`:''}${tests.slice(0,1).map(t=>`<span class="calendar-test">${esc(t.name)}</span>`).join('')}${key===EXAM?'<span class="calendar-test">NEET 2027</span>':''}</button>`;}).join('');
+ const dp=st.day[cs]||[],done=st.dayDone[cs]||[],date=new Date(cs+'T00:00:00');pickers.dpick.setSelected(dp);$('dsum').textContent='Choose chapters for '+fmt(cs);
+ const due=Object.keys(st.due||{}).filter(id=>st.due[id]===cs&&BY[id]);
+ const selected=dp.map(id=>`<article class="selected-chapter"><h3><span class="chapter-dot"></span>${esc(BY[id].c)}</h3><p class="mute">${S[BY[id].s].n} · ${esc(BY[id].group)}</p><div class="session-date">▦ ${fmt(cs)} ${done.includes(id)?'<span class="tag good">Studied</span>':''}</div><button class="btn ${done.includes(id)?'':'p'} wide" ${done.includes(id)?'data-unmarkdone':'data-markdone'}="${cs}|${esc(id)}">${done.includes(id)?'↶ Undo studied':'✓ Mark studied'}</button><div class="session-actions"><button class="btn" data-reschedule="${cs}|${esc(id)}">▦ Reschedule</button><button class="btn" data-rmd="${cs}|${esc(id)}">Remove</button></div></article>`).join('');
+ $('calmain').innerHTML=`<div class="calendar-primary"><div class="metric-grid">${metric('▦','Planned this week',planned,'chapters')}${metric('✓','Completed this week',completed,'chapters')}${metric('▤','Upcoming tests',upcoming().filter(t=>t.date.slice(0,7)===tk.slice(0,7)).length,'this month')}${metric('♨','Study streak',studyStreak(),'days')}</div><section class="card month-card"><div class="row"><div class="month-controls"><button class="btn" data-cm="-1" aria-label="Previous month">‹</button><button class="btn" data-cm="1" aria-label="Next month">›</button><h2>${cm.toLocaleDateString('en-IN',{month:'long',year:'numeric'})}</h2></div><button class="btn" data-calendar-today>Today</button></div><div class="cal">${headers}${cells}</div></section></div><aside class="calendar-secondary"><section class="card"><div class="row selected-heading"><div><span class="mute">Selected day</span><h2>${date.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</h2></div><div><button class="btn" data-day-step="-1" aria-label="Previous day">‹</button> <button class="btn" data-day-step="1" aria-label="Next day">›</button></div></div>${selected||'<div class="empty">A little room to make progress.<br>Plan a chapter for this day.</div>'}${due.length?'<h3>Chapter targets</h3>'+due.map(id=>`<div class="target-line">${esc(BY[id].c)} <button class="btn" data-setdue="${esc(id)}">Edit date</button></div>`).join(''):''}<button class="btn wide" data-pick-day>＋ Add another chapter for this day</button></section><section class="card"><div class="row"><h2>Mini calendar</h2><small class="mute">${cm.toLocaleDateString('en',{month:'short',year:'numeric'})}</small></div><div class="mini-month">${headers}${days.map(d=>{const k=iso(d);return `<button data-cd="${k}" aria-label="${d.toLocaleDateString('en',{dateStyle:'full'})}" class="${k===cs?'selected':''} ${d.getMonth()!==m?'outside':''}">${d.getDate()}${(st.day[k]||[]).length?'<i></i>':''}</button>`}).join('')}</div></section><section class="card"><div class="row"><h2>Upcoming tests</h2><button class="text-button" data-v="plan">View all →</button></div>${upcoming().slice(0,3).map(t=>`<div class="test-preview"><span class="metric-icon">▤</span><div><b>${esc(t.name)}</b><small>${t.ch.length} chapters</small></div><span>${fmt(t.date)}</span></div>`).join('')||'<p class="mute">No upcoming tests. Add one in Plan & tests.</p>'}</section></aside>`;
 }
+
 let activeDueId=null;
 function renderTodo(){
-  const tk=iso(today()),planned=st.day[tk]||[],studiedToday=st.dayDone[tk]||[];
-  const total=new Set([...planned,...studiedToday]).size,done=studiedToday.length;
-  const pct=total?Math.min(100,Math.round(done/total*100)):0;
-  const customTodos=st.todos||[],customDone=customTodos.filter(t=>t.done).length;
-  $("todomain").innerHTML=`
-    <div class="card">
-      <div class="row"><div><h2>Today’s chapter targets</h2><div class="mute">${fmt(tk)} · Daily focus</div></div><div style="text-align:right"><b>${done} of ${total}</b><div class="mute" style="font-size:12px">${pct}% complete</div></div></div>
-      <div class="bar" style="margin:10px 0 16px"><i style="width:${pct}%"></i></div>
-      <div class="grp">Planned for today</div>${dlist(planned,tk)}
-      <div class="grp" style="margin-top:16px">Studied today</div>${listStudied(studiedToday,tk)}
-    </div>
-    <div class="card">
-      <div class="row"><h2>Daily to-do tasks</h2><span class="mute" style="font-size:12px">${customDone} of ${customTodos.length} tasks done</span></div>
-      <form id="customtodoform" style="display:flex;gap:8px;margin:12px 0 16px"><input type="text" id="customtodotext" placeholder="Add a custom task (e.g. solve 40 MCQs, revise notes…)" style="flex:1" required maxlength="180"><button class="btn p" type="submit">+ Add task</button></form>
-      ${customTodos.length?customTodos.map(t=>`<div class="f"><label style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer"><input type="checkbox" data-todotoggle="${t.id}" ${t.done?"checked":""}><span style="${t.done?'text-decoration:line-through;opacity:.6':''}">${esc(t.text)}</span></label><button class="btn" data-tododel="${t.id}" aria-label="Delete">&times;</button></div>`).join(""):`<div class="mute">No custom tasks yet. Add one above!</div>`}
-    </div>`;
-  if(pickers.tpick){pickers.tpick.setSelected(planned);$("tsum").textContent="Add chapters to today’s study plan ("+fmt(tk)+")"}
+ const tk=iso(today()),planned=st.day[tk]||[],studiedToday=st.dayDone[tk]||[],tasks=st.todos||[],weekEnd=new Date(weekStart()+'T00:00:00');weekEnd.setDate(weekEnd.getDate()+6);
+ const completed=tasks.filter(t=>t.done&&t.completedAt===tk).length+studiedToday.length;
+ const pending=tasks.filter(t=>!t.done),overdue=pending.filter(t=>t.due&&t.due<tk),todayTasks=pending.filter(t=>!t.due||t.due===tk),thisWeek=pending.filter(t=>t.due>tk&&t.due<=iso(weekEnd)),later=pending.filter(t=>t.due>iso(weekEnd));
+ const filtered=t=>taskFilter==='all'||(taskFilter==='completed'?t.done:taskFilter==='pending'?!t.done:t.priority===taskFilter);
+ const row=t=>`<div class="task-row ${t.done?'task-done':''}"><label><input type="checkbox" data-todotoggle="${esc(t.id)}" ${t.done?'checked':''}><span><b>${esc(t.text)}</b><small>Personal task</small></span></label><span class="task-due">▦ ${t.due?fmt(t.due):'No date'}<small>${t.due&&t.due<tk&&!t.done?'Overdue':t.due===tk?'Today':''}</small></span><span class="priority ${t.done?'complete':t.priority||'medium'}">${t.done?'Completed':({high:'↟ High',medium:'↓ Medium',low:'• Low'}[t.priority||'medium'])}</span><button class="text-button delete-task" data-tododel="${esc(t.id)}" aria-label="Delete task: ${esc(t.text)}">×</button></div>`;
+ const group=(name,items)=>{const visible=items.filter(filtered);return visible.length?`<details class="task-group" open><summary>${name}<small>${visible.length} tasks</small></summary>${visible.map(row).join('')}</details>`:''};
+ const counts=['high','medium','low'].map(p=>pending.filter(t=>(t.priority||'medium')===p).length),total=pending.length,h=total?counts[0]/total*100:0,m=total?counts[1]/total*100:0;
+ $('todomain').innerHTML=`<div class="metric-grid todo-metrics">${metric('▦','Tasks due today',todayTasks.length+planned.filter(id=>!studiedToday.includes(id)).length,'tasks and chapters')}${metric('✓','Completed today',completed,'Great progress!','green')}${metric('!','Overdue tasks',overdue.length,overdue.length?'Needs your attention':'All caught up','red')}${metric('♨','Study streak',studyStreak()+' days','Keep it going!')}</div><section class="card tasks-panel"><div class="row"><h2>My tasks</h2><select id="taskfilter" aria-label="Filter tasks">${[['all','All tasks'],['pending','Pending'],['completed','Completed'],['high','High priority'],['medium','Medium priority'],['low','Low priority']].map(([v,l])=>`<option value="${v}" ${taskFilter===v?'selected':''}>${l}</option>`).join('')}</select></div><form id="customtodoform" class="task-composer"><input type="text" id="customtodotext" placeholder="What would you like to work on?" aria-label="Task name" required maxlength="180"><input id="taskdate" type="date" value="${tk}" aria-label="Task due date"><select id="taskpriority" aria-label="Task priority"><option value="medium">Medium priority</option><option value="high">High priority</option><option value="low">Low priority</option></select><button class="btn p" type="submit">＋ Add task</button></form>${group('Overdue',overdue)}${group('Today',todayTasks)}${group('This week',thisWeek)}${group('Later',later)}${group('Completed',tasks.filter(t=>t.done))}${!tasks.some(filtered)?'<div class="empty">'+(tasks.length?'No tasks match this filter.':'Your next small step starts here.<br>Add a task to make today count.')+'</div>':''}<div class="chapter-tasks"><h2>Today’s study plan</h2>${dlist(planned,tk)}${studiedToday.length?'<h3>Studied today</h3>'+listStudied(studiedToday,tk):''}</div></section><aside class="tasks-aside"><section class="card"><div class="row"><h2>Task priorities</h2><span class="mute">Pending tasks</span></div><div class="priority-chart"><div class="priority-ring" style="--segments:${total?`conic-gradient(#ec639e 0 ${h}%,#f5ca63 ${h}% ${h+m}%,#bf82e8 ${h+m}% 100%)`:'var(--line)'}"><div><b>${total}</b><small>total tasks</small></div></div><div class="priority-legend">${['High','Medium','Low'].map((p,i)=>`<div><i class="${p.toLowerCase()}"></i><span>${p} priority</span><b>${counts[i]}</b></div>`).join('')}</div></div></section><section class="card"><h2>Upcoming deadlines</h2>${pending.filter(t=>t.due).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,6).map(t=>`<div class="deadline"><div class="date-badge">${new Date(t.due+'T00:00:00').getDate()}<small>${new Date(t.due+'T00:00:00').toLocaleDateString('en',{month:'short'})}</small></div><div><b>${esc(t.text)}</b><small class="mute">${t.due<tk?'Overdue':t.due===tk?'Today':fmt(t.due)}</small></div><span class="priority ${t.priority||'medium'}">${t.priority||'medium'}</span></div>`).join('')||'<div class="empty">No deadlines yet.<br>Add a due date to a task to see it here.</div>'}</section></aside>`;
+ if(pickers.tpick){pickers.tpick.setSelected(planned);$('tsum').textContent='Add chapters to today’s study plan ('+fmt(tk)+')';}
 }
+
 function buildPicker(){
   pickers.wpick=createChapterPicker($('wpick'),'Plan your week');
   pickers.picker=createChapterPicker($('picker'),'Build your test syllabus');
@@ -198,7 +179,7 @@ document.addEventListener("click",e=>{
   const sdue=e.target.closest("[data-setdue]");
   if(sdue){activeDueId=sdue.dataset.setdue;$("duename").textContent=BY[activeDueId].c+" · "+S[BY[activeDueId].s].n;$("dueinput").value=st.due[activeDueId]||iso(today());$("duedialog").showModal();return}
   const tdt=e.target.closest("[data-todotoggle]");
-  if(tdt){const item=(st.todos||[]).find(x=>x.id===tdt.dataset.todotoggle);if(item){item.done=!item.done;save();render();}return}
+  if(tdt){const item=(st.todos||[]).find(x=>x.id===tdt.dataset.todotoggle);if(item){item.done=!item.done;item.completedAt=item.done?iso(today()):"";save();render();}return}
   const tdd=e.target.closest("[data-tododel]");
   if(tdd){st.todos=(st.todos||[]).filter(x=>x.id!==tdd.dataset.tododel);save();render();return}
   const a=e.target.closest("[data-add]"),r=e.target.closest("[data-rm]"),w=e.target.closest("[data-wk]"),cmb=e.target.closest("[data-cm]"),cd=e.target.closest("[data-cd]");
@@ -225,7 +206,7 @@ document.addEventListener("submit",e=>{
     const input=$("customtodotext"),val=input?input.value.trim().slice(0,180):"";
     if(!val)return;
     st.todos=st.todos||[];
-    st.todos.push({id:String(Date.now()),text:val,done:false});
+    st.todos.push({id:String(Date.now()),text:val,done:false,due:$("taskdate").value,priority:$("taskpriority").value});
     save();render();
   }
 });
@@ -416,11 +397,11 @@ connectFirebase(FIREBASE_CONFIG).catch(()=>{showLoading(false);$('loginconnectio
 
 
 function renderShell(){
- const titles={dash:['Your study space, at a glance.','Stay consistent. Every chapter brings you closer to NEET.'],syl:['One chapter closer.','Your syllabus, broken into small, achievable steps.'],plan:['A little planning. A lot of progress.','Set your targets, plan your week and prepare for every test.'],cal:['Plan your study calendar.','Schedule your chapters, stay consistent and make every day count.'],todo:['Stay on top of every task.','Break your goals into small steps and make consistent progress towards NEET.']};
+ const titles={dash:['Your study space, at a glance.','Stay consistent. Every chapter brings you closer to NEET.'],syl:['Master your syllabus.','Explore all chapters, track your progress and plan your study journey.'],plan:['A little planning. A lot of progress.','Set your targets, plan your week and prepare for every test.'],cal:['Plan your study calendar.','Schedule your chapters, stay consistent and make every day count.'],todo:['Stay on top of every task.','Break your goals into small steps and make consistent progress towards NEET.']};
  const [title,subtitle]=titles[st.view]||titles.dash;
  document.querySelector('.herohead h1').textContent=title;
  document.querySelector('.herohead .sub').textContent=subtitle;
- document.querySelector('.top').hidden=st.view!=='syl';
+ document.querySelector('.top').hidden=true;
  document.querySelector('.hero-quote').hidden=st.view!=='dash';
 }
 function renderDashboard(){
@@ -436,3 +417,25 @@ function renderDashboard(){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-jump-day]');if(b){cs=b.dataset.jumpDay;cm=new Date(cs.slice(0,7)+'-01T00:00:00');st.view='cal';save();render();}});
 $('global-search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();if(query){const match=ALL.find(a=>a.c.toLowerCase().includes(query));if(match)st.tab=match.s;st.view='syl';$('search').value=e.target.value;render();}else{$('search').value='';render();}});
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('global-search').focus();}});
+
+function metric(icon,label,value,detail,tone='pink'){
+ return `<article class="metric-card ${tone}"><span class="metric-icon" aria-hidden="true">${icon}</span><div><span>${label}</span><strong>${value}</strong><small>${detail}</small></div></article>`;
+}
+function studyStreak(){
+ let count=0,d=today();if(!(st.dayDone[iso(d)]||[]).length)d.setDate(d.getDate()-1);
+ while((st.dayDone[iso(d)]||[]).length){count++;d.setDate(d.getDate()-1);}return count;
+}
+function renderSyllabusOverview(){
+ const done=ALL.filter(a=>ticks(a.id)===3).length,started=ALL.filter(a=>ticks(a.id)>0&&ticks(a.id)<3).length;
+ $('syloverview').innerHTML='<div class="metric-grid syllabus-metrics">'+metric('◎','Overall completion',Math.round(done/ALL.length*100)+'%',`${done} of ${ALL.length} chapters done`)+metric('♧','Total chapters',ALL.length,`across ${S.length} subjects`)+metric('✓','Completed',done,'chapters')+metric('◌','In progress',started,'chapters')+metric('▤','Not started',ALL.length-done-started,'chapters')+'</div>';
+ $('sylside').innerHTML='<section class="card"><h2>Subject-wise progress</h2>'+S.map((s,i)=>{const ids=ALL.filter(a=>a.s===i),n=ids.filter(a=>ticks(a.id)===3).length,pct=Math.round(n/ids.length*100);return `<button class="subject-progress" data-subject="${i}"><div class="row"><b>${s.n}</b><small>${n} / ${ids.length} · ${pct}%</small></div><div class="bar"><i style="width:${pct}%"></i></div></button>`}).join('')+'</section><section class="card"><h2>Quick actions</h2><button class="quick-link" data-v="plan">▦ <span>Plan your syllabus<small>Create a study plan for NEET</small></span>→</button><button class="quick-link" data-v="cal">▤ <span>Schedule your next chapter<small>Make time for steady progress</small></span>→</button><button class="quick-link" data-v="dash">◴ <span>Track your progress<small>See your overall study activity</small></span>→</button></section><section class="card"><h2>Syllabus info</h2>'+S.map((s,i)=>`<div class="row info-line"><span>${s.n}</span><b>${ALL.filter(a=>a.s===i).length}</b></div>`).join('')+'</section>';
+}
+document.addEventListener('click',e=>{
+ const subj=e.target.closest('[data-subject]');if(subj){st.tab=+subj.dataset.subject;syllabusGroup='all';save();render();}
+ if(e.target.closest('[data-calendar-today]')){cs=iso(today());cm=new Date(today().getFullYear(),today().getMonth(),1);render();}
+ const day=e.target.closest('[data-day-step]');if(day){const date=new Date(cs+'T00:00:00');date.setDate(date.getDate()+Number(day.dataset.dayStep));cs=iso(date);cm=new Date(date.getFullYear(),date.getMonth(),1);render();}
+ if(e.target.closest('[data-pick-day]')){const details=$('dpick').closest('details');details.open=true;details.scrollIntoView({behavior:'smooth',block:'center'});}
+ const reschedule=e.target.closest('[data-reschedule]');if(reschedule){const value=reschedule.dataset.reschedule;$('rescheduleform').dataset.value=value;$('reschedulename').textContent=BY[value.slice(11)].c;$('rescheduledate').value=value.slice(0,10);$('rescheduledialog').showModal();}
+});
+document.addEventListener('change',e=>{if(e.target.id==='taskfilter'){taskFilter=e.target.value;renderTodo();}});
+$('rescheduleform').addEventListener('submit',e=>{e.preventDefault();const value=e.currentTarget.dataset.value,from=value.slice(0,10),id=value.slice(11),to=$('rescheduledate').value;if(!to)return;st.day[from]=(st.day[from]||[]).filter(x=>x!==id);st.day[to]=[...new Set([...(st.day[to]||[]),id])];cs=to;cm=new Date(to.slice(0,7)+'-01T00:00:00');save();render();$('rescheduledialog').close();});
