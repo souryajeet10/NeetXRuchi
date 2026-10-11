@@ -134,6 +134,9 @@ body{background:radial-gradient(ellipse at 95% 0%,#f9dce955,transparent 45%),var
 .wrong-id-dialog>.btn{width:100%}
 .action-loading{position:fixed;top:max(16px,env(safe-area-inset-top));right:16px;z-index:110;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);box-shadow:0 6px 24px #652c4c20;font-size:13px;pointer-events:none}
 .action-spinner{width:18px;height:18px;flex:none;border:2px solid var(--line);border-top-color:var(--ok);border-radius:50%;animation:loadSpin .7s linear infinite}
+.action-tick{display:none;color:var(--ok);font-size:22px;line-height:1;font-weight:800}
+.action-loading.is-saved .action-spinner{display:none}
+.action-loading.is-saved .action-tick{display:block}
 .loading-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease}
 .loading-screen.is-active{opacity:1;visibility:visible}
 .loading-box{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:38px 32px 34px;width:min(380px,calc(100vw - 36px));text-align:center;box-shadow:0 24px 60px #b5558418,0 4px 16px #0000000a;animation:loadPop .3s cubic-bezier(0.16,1,0.3,1)}

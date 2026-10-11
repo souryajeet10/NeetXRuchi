@@ -190,8 +190,8 @@ document.addEventListener("click",e=>{
   const rd=e.target.closest("[data-rmd]"),mv=e.target.closest("[data-mv]");
   if(rd){const v=rd.dataset.rmd,d=v.slice(0,10),id=v.slice(11);st.day[d]=(st.day[d]||[]).filter(x=>x!=id);save();render()}
   if(mv){const v=mv.dataset.mv,d=v.slice(0,10),id=v.slice(11),k=iso(today());st.day[d]=(st.day[d]||[]).filter(x=>x!=id);st.day[k]=[...new Set([...(st.day[k]||[]),id])];save();render()}
-  if(t){st.tab=+t.dataset.t;syllabusGroup="all";save();render()}
-  if(n){st.view=n.dataset.v;save();render()}
+  if(t){st.tab=+t.dataset.t;syllabusGroup="all";render()}
+  if(n){st.view=n.dataset.v;render()}
   if(d&&confirm("Delete this test?")){st.tests=st.tests.filter(x=>x.id!=d.dataset.del);save();render()}
 });
 $("dueform").onsubmit=e=>{e.preventDefault();if(activeDueId){st.due=st.due||{};st.due[activeDueId]=$("dueinput").value;save();render();$("duedialog").close();}};
@@ -223,8 +223,8 @@ $("addt").onclick=()=>{
   $('testtoastmessage').textContent='Test added';
   testToastTimer=setTimeout(dismissTestToast,5000);
 };
-$("gv").onclick=()=>{st.grid=!st.grid;save();render()};
-$("hide").checked=st.hide;$("hide").onchange=()=>{st.hide=$("hide").checked;save();render()};
+$("gv").onclick=()=>{st.grid=!st.grid;render()};
+$("hide").checked=st.hide;$("hide").onchange=()=>{st.hide=$("hide").checked;render()};
 if($("reset"))$("reset").onclick=()=>{if(confirm("Clear progress and tests for the current account? Other accounts are unaffected. This cannot be undone.")){st.done={};st.dates={};st.tests=[];st.plan={};st.day={};st.dayDone={};st.due={};st.todos=[];st.lec=fresh().lec;st.legacyProgress={};save();render()}};
 buildPicker();render();
 // Paste your PUBLIC Firebase web config here before sharing/hosting this file.
@@ -239,7 +239,16 @@ const FIREBASE_CONFIG = {
 };
 let sdk=null,auth=null,db=null,user=null,ready=true,dirty=false,saving=false,version=0,saveTimer=null,unsubscribe=null;
 let editRevision=0,authGeneration=0,conflict=false;
-function status(message,error=false,busy=false){$('actionloading').hidden=!busy;$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
+let actionFeedbackTimer;
+function actionFeedback(busy,saved=false){
+  clearTimeout(actionFeedbackTimer);
+  const indicator=$('actionloading');
+  indicator.hidden=!(busy||saved);
+  indicator.classList.toggle('is-saved',saved);
+  $('actionloadingtext').textContent=saved?'Progress saved':'Saving your progress…';
+  if(saved)actionFeedbackTimer=setTimeout(()=>{indicator.hidden=true;},1800);
+}
+function status(message,error=false,busy=false,saved=false){actionFeedback(busy&&!error,saved&&!error);$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
 function lock(value){$('workspace').inert=value;$('workspace').style.opacity=value?'.45':'';if($('reset'))$('reset').disabled=value;}
 function persistProgress(){
   if(!user||user.isAnonymous)return
@@ -256,7 +265,7 @@ async function pushCloud(){
       if(current!==expected)throw Error('SYNC_CONFLICT');
       tx.set(ref,{state:payload,version:expected+1,updatedAt:sdk.serverTimestamp()});});
     if(generation!==authGeneration)return;
-    version=expected+1;dirty=revision!==editRevision;status(dirty?'Saving latest changes…':'Saved to your account · synced across devices',false,dirty);
+    version=expected+1;dirty=revision!==editRevision;status(dirty?'Saving latest changes…':'Saved to your account · synced across devices',false,dirty,!dirty);
   }catch(e){if(generation!==authGeneration)return;conflict=e.message==='SYNC_CONFLICT';status(conflict?'Another device changed your progress. Load the cloud version before making more changes.':'Cloud save failed. Keep this tab open and retry. '+friendly(e),true)}
   finally{saving=false;$('retry').hidden=!dirty;if(dirty&&!conflict&&editRevision!==revision)saveTimer=setTimeout(pushCloud,700);}
 }
@@ -378,7 +387,7 @@ function renderDashboard(){
  const target=(name,n,t)=>'<section class="card target-card"><h2><span>▦</span> '+name+'</h2><p><b>'+n+' of '+t+'</b> chapters</p>'+progress(n,t)+'<div class="row"><span class="mute">Keep making progress</span><button class="btn" data-v="plan">Edit target</button></div></section>';
  $('dash').innerHTML='<div class="dashboard-stats"><section class="card overall-card"><div class="row"><h2>Overall Progress</h2><button class="text-button" data-v="syl">View details →</button></div><div class="overall-body"><div class="progress-ring" style="--progress:'+percent+'%"><strong>'+percent+'%</strong></div><div><p><b>'+completed+' of '+ALL.length+'</b> chapters studied</p>'+progress(completed,ALL.length)+'<div class="progress-numbers"><span><b>'+ALL.length+'</b>Total chapters</span><span><b>'+completed+'</b>Studied</span><span><b>'+(ALL.length-completed)+'</b>Remaining</span></div></div></div></section>'+target('This Month',md,st.mo)+target('This Week',wd,st.wk)+'</div><div class="dashboard-middle"><div><section class="card"><div class="row"><div><h2>Today’s Plan</h2><p class="mute">'+today().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+'</p></div><button class="btn p" data-v="cal">＋ Add chapter</button></div>'+dlist(planned,tk)+(st.dayDone[tk]?.length?listStudied(st.dayDone[tk],tk):'')+'</section><section class="card"><h2>Weekly Overview <small class="mute">(from '+fmt(ws)+')</small></h2><p class="mute">'+wd+' / '+st.wk+' chapters completed</p>'+progress(wd,st.wk)+'<div class="week-strip">'+Array.from({length:7},(_,i)=>{const d=new Date(ws+'T00:00:00');d.setDate(d.getDate()+i);const k=iso(d);return '<button data-jump-day="'+k+'" class="'+(k===tk?'active':'')+'"><span>'+d.toLocaleDateString('en',{weekday:'short'})+'</span><b>'+d.getDate()+'</b><small>'+(st.day[k]||[]).length+' planned</small></button>'}).join('')+'</div></section></div><section class="card"><div class="row"><h2>Upcoming tests</h2><button class="text-button" data-v="plan">View all →</button></div>'+ (upcoming().slice(0,3).map(t=>'<div class="deadline"><div class="date-badge">'+new Date(t.date+'T00:00:00').getDate()+'<small>'+new Date(t.date+'T00:00:00').toLocaleDateString('en',{month:'short'})+'</small></div><div><b>'+esc(t.name)+'</b><p class="mute">'+t.ch.length+' chapters · '+dleft(t.date)+' days to prepare</p></div></div>').join('')||'<div class="empty">A clear schedule, a fresh start.<br>Add your next test to prepare with purpose.</div>')+'<button class="btn" data-v="plan">＋ Plan a test</button><div class="quiet-note">✧<p>Progress starts with showing up.<br>You’ve got this.</p></div></section></div><section class="card"><div class="row"><div><h2>Recommended Next</h2><p class="mute">A little momentum for your next study session</p></div><button class="text-button" data-v="syl">Browse syllabus →</button></div><div class="recommendations">'+ALL.filter(a=>!studied(a.id)).slice(0,4).map(a=>'<article><span class="book-icon">♧</span><div><b>'+esc(a.c)+'</b><p class="mute">'+S[a.s].n+'</p></div><button class="btn" data-add="'+esc(a.id)+'">'+((st.plan[ws]||[]).includes(a.id)?'✓ Planned':'+ Plan')+'</button></article>').join('')+'</div></section>';
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-jump-day]');if(b){cs=b.dataset.jumpDay;cm=new Date(cs.slice(0,7)+'-01T00:00:00');st.view='cal';save();render();}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-jump-day]');if(b){cs=b.dataset.jumpDay;cm=new Date(cs.slice(0,7)+'-01T00:00:00');st.view='cal';render();}});
 $('global-search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();if(query){const match=ALL.find(a=>a.c.toLowerCase().includes(query));if(match)st.tab=match.s;st.view='syl';$('search').value=e.target.value;render();}else{$('search').value='';render();}});
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('global-search').focus();}});
 
@@ -396,7 +405,7 @@ function renderSyllabusOverview(){
  $('sylside').innerHTML='<section class="card"><h2>Subject-wise progress</h2>'+S.map((s,i)=>{const ids=ALL.filter(a=>a.s===i),n=ids.filter(a=>ticks(a.id)===3).length,pct=Math.round(n/ids.length*100);return `<button class="subject-progress" data-subject="${i}"><div class="row"><b>${s.n}</b><small>${n} / ${ids.length} · ${pct}%</small></div><div class="bar"><i style="width:${pct}%"></i></div></button>`}).join('')+'</section><section class="card"><h2>Quick actions</h2><button class="quick-link" data-v="plan">▦ <span>Plan your syllabus<small>Create a study plan for NEET</small></span>→</button><button class="quick-link" data-v="cal">▤ <span>Schedule your next chapter<small>Make time for steady progress</small></span>→</button><button class="quick-link" data-v="dash">◴ <span>Track your progress<small>See your overall study activity</small></span>→</button></section><section class="card"><h2>Syllabus info</h2>'+S.map((s,i)=>`<div class="row info-line"><span>${s.n}</span><b>${ALL.filter(a=>a.s===i).length}</b></div>`).join('')+'</section>';
 }
 document.addEventListener('click',e=>{
- const subj=e.target.closest('[data-subject]');if(subj){st.tab=+subj.dataset.subject;syllabusGroup='all';save();render();}
+ const subj=e.target.closest('[data-subject]');if(subj){st.tab=+subj.dataset.subject;syllabusGroup='all';render();}
  if(e.target.closest('[data-calendar-today]')){cs=iso(today());cm=new Date(today().getFullYear(),today().getMonth(),1);render();}
  const day=e.target.closest('[data-day-step]');if(day){const date=new Date(cs+'T00:00:00');date.setDate(date.getDate()+Number(day.dataset.dayStep));cs=iso(date);cm=new Date(date.getFullYear(),date.getMonth(),1);render();}
  if(e.target.closest('[data-pick-day]')){const details=$('dpick').closest('details');details.open=true;details.scrollIntoView({behavior:'smooth',block:'center'});}
