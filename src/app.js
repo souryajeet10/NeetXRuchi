@@ -246,14 +246,14 @@ function actionFeedback(busy,saved=false){
   indicator.hidden=!(busy||saved);
   indicator.classList.toggle('is-saved',saved);
   $('actionloadingtext').textContent=saved?'Progress saved':'Saving your progress…';
-  if(saved)actionFeedbackTimer=setTimeout(()=>{indicator.hidden=true;},1800);
+  if(saved)actionFeedbackTimer=setTimeout(()=>{indicator.hidden=true;},800);
 }
 function status(message,error=false,busy=false,saved=false){actionFeedback(busy&&!error,saved&&!error);$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
 function lock(value){$('workspace').inert=value;$('workspace').style.opacity=value?'.45':'';if($('reset'))$('reset').disabled=value;}
 function persistProgress(){
   if(!user||user.isAnonymous)return
   if(!ready)return;
-  dirty=true;editRevision++;status('Changes waiting to sync…',false,true);clearTimeout(saveTimer);saveTimer=setTimeout(pushCloud,700);
+  dirty=true;editRevision++;status('Changes waiting to sync…',false,true);clearTimeout(saveTimer);saveTimer=setTimeout(pushCloud,200);
 }
 async function pushCloud(){
   if(!user||!ready||!dirty||saving||conflict)return;
@@ -267,10 +267,10 @@ async function pushCloud(){
     if(generation!==authGeneration)return;
     version=expected+1;dirty=revision!==editRevision;status(dirty?'Saving latest changes…':'Saved to your account · synced across devices',false,dirty,!dirty);
   }catch(e){if(generation!==authGeneration)return;conflict=e.message==='SYNC_CONFLICT';status(conflict?'Another device changed your progress. Load the cloud version before making more changes.':'Cloud save failed. Keep this tab open and retry. '+friendly(e),true)}
-  finally{saving=false;$('retry').hidden=!dirty;if(dirty&&!conflict&&editRevision!==revision)saveTimer=setTimeout(pushCloud,700);}
+  finally{saving=false;$('retry').hidden=!dirty;if(dirty&&!conflict&&editRevision!==revision)saveTimer=setTimeout(pushCloud,200);}
 }
 function friendly(e){
-  const messages={'auth/invalid-credential':'Your study ID is incorrect.','auth/user-not-found':'Your study ID is incorrect.','auth/wrong-password':'Your study ID is incorrect.','auth/email-already-in-use':'This ID is already used. Please sign in.','auth/credential-already-in-use':'This ID is already used. Please sign in.','auth/network-request-failed':'Check your internet connection and try again.','auth/too-many-requests':'Too many attempts. Wait a little before trying again.','auth/operation-not-allowed':'New account creation is not allowed. Please ask Maalkin Softybaby.','permission-denied':'Your account could not be saved. Please try again later.'};
+  const messages={'auth/invalid-credential':'Your study ID is incorrect.','auth/user-not-found':'Your study ID is incorrect.','auth/wrong-password':'Your study ID is incorrect.','auth/email-already-in-use':'This ID is already used. Please sign in.','auth/credential-already-in-use':'This ID is already used. Please sign in.','auth/network-request-failed':'Check your internet connection and try again.','auth/too-many-requests':'Too many attempts. Wait a little before trying again.','auth/operation-not-allowed':'Sign-in is unavailable. Please try again later.','permission-denied':'Your account could not be saved. Please try again later.'};
   return messages[e.code]||e.userMessage||'Something went wrong. Please try again.';
 }
 function clearTransient(){dismissTestToast();$('testmaker').open=false;$('testsyllabus').open=false;openT.clear();openL.clear();pw=0;cs=null;query='';syllabusGroup='all';syllabusClass='all';Object.values(pickers).forEach(p=>p.reset());$('search').value='';$('tn').value='';$('td').value='';$('pc').textContent='0';pickers.picker.reset();}
@@ -322,7 +322,8 @@ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.c
 $('account').onclick=()=>{$('authmsg').textContent='';$('authdialog').showModal()};
 let authBusy=false;
 function authControls(busy){authBusy=busy;for(const id of ['signin','accessid'])$(id).disabled=busy||!auth;}
-$('signup').onclick=()=>{$('authmsg').textContent=$('signupnotice').textContent;};
+function showAccessPopup(message){$('wrongidmessage').textContent=message;$('wrongiddialog').showModal();}
+$('signup').onclick=()=>{$('authmsg').textContent='';showAccessPopup('New account creation is not allowed. Contact Softy Baby.');};
 $('signinmode').onclick=()=>{$('authmsg').textContent='';$('accessid').focus();};
 async function authenticate(){
   if(authBusy||!auth||!$('authform').reportValidity())return;
@@ -336,7 +337,7 @@ async function authenticate(){
     authControls(false);await accountChanged(result.user);$('authmsg').textContent='';
   }catch(e){
     showLoading(false);$('authmsg').textContent=friendly(e);
-    if(['auth/invalid-study-id','auth/invalid-credential','auth/user-not-found','auth/wrong-password','auth/invalid-email'].includes(e.code))$('wrongiddialog').showModal();
+    if(['auth/invalid-study-id','auth/invalid-credential','auth/user-not-found','auth/wrong-password','auth/invalid-email'].includes(e.code))showAccessPopup('This is only for Softy Baby.');
   }
   finally{authControls(false);$('signin').classList.remove('is-loading');}
 }
