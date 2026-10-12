@@ -21,3 +21,18 @@ export function completionTargetError(value, today) {
 export function daysBetween(from, to) {
   return Math.round((Date.parse(to + 'T00:00:00Z') - Date.parse(from + 'T00:00:00Z')) / 86400000);
 }
+
+// Include both today and the deadline as available study days.
+export function chapterPace(remaining, deadline, today) {
+  if (!normalizeCompletionTarget(deadline) || !isValidDate(today)) return null;
+  const days = Math.max(0, daysBetween(today, deadline) + 1);
+  const chapters = Math.max(0, Math.floor(remaining));
+  return {
+    remaining: chapters,
+    days,
+    overdue: deadline < today,
+    daily: days ? Math.ceil(chapters / days) : 0,
+    weekly: days ? Math.min(chapters, Math.ceil(chapters * 7 / days)) : 0,
+    weekDays: Math.min(7, days),
+  };
+}

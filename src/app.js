@@ -1,4 +1,4 @@
-import { EXAM_DATE, completionTargetError, daysBetween } from './completion-target.js';
+import { EXAM_DATE, completionTargetError, daysBetween, chapterPace } from './completion-target.js';
 import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, runTransaction, serverTimestamp, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
@@ -101,13 +101,11 @@ function renderPlan(){
   const ws=weekStart(),ms=iso(today()).slice(0,7);
   const wd=new Set(Object.keys(st.dayDone||{}).filter(d=>d>=ws).flatMap(d=>st.dayDone[d]||[])).size;
   const md=new Set(Object.keys(st.dayDone||{}).filter(d=>d.startsWith(ms)).flatMap(d=>st.dayDone[d]||[])).size;
-  const pend=ALL.filter(a=>!studied(a.id)),wl=Math.max(1,Math.ceil(dleft(EXAM)/7));
-  const need=Math.ceil(pend.length/wl);
   const bar=(d,t)=>`<div class="bar"><i style="width:${Math.min(100,Math.round(d/Math.max(1,t)*100))}%"></i></div>`;
-  $("targets").innerHTML=`<div class="card"><h2>Chapter targets</h2>
+  $("targets").innerHTML=`<div class="card"><h2>Deadline study pace</h2>${renderChapterPace()}<button class="btn" type="button" data-edit-completion>${st.syllabusCompletionDate?'Edit deadline':'Set completion deadline'}</button></div><div class="card"><h2>Personal chapter targets</h2>
   <div class="row"><span>This week <b>${wd}</b> of <input class="num" type="number" min="0" id="wk" value="${st.wk}" aria-label="Weekly target"> chapters</span><span class="mute">Mon to Sun</span></div>${bar(wd,st.wk)}
   <div class="row" style="margin-top:14px"><span>This month <b>${md}</b> of <input class="num" type="number" min="0" id="mo" value="${st.mo}" aria-label="Monthly target"> chapters</span></div>${bar(md,st.mo)}
-  <p class="mute" style="margin:12px 0 0">${pend.length} chapters left to study with ${wl} weeks to NEET. To finish studying by exam day you need about <b>${need} a week</b>${need>st.wk?", more than your current target":""}.</p></div>`;
+  <p class="mute" style="margin:12px 0 0">Your personal weekly and monthly goals can be adjusted independently of the deadline study pace.</p></div>`;
   const wk=wkISO(pw),pl=st.plan[wk]||[],pd2=pl.filter(studied).length;
   $("wkplan").innerHTML=`<div class="card"><div class="row"><button class="btn" data-wk="-1" aria-label="Previous week">&lsaquo; Prev</button><b>${pw==0?"This week":"Week of "+fmt(wk)}${pw==0?` (from ${fmt(wk)})`:""}</b><button class="btn" data-wk="1" aria-label="Next week">Next &rsaquo;</button></div>
   <p class="mute" style="margin:8px 0 0">${pl.length?`${pd2} of ${pl.length} chosen chapters studied`:"No chapters chosen for this week yet."}</p>${pl.length?bar(pd2,pl.length):""}
@@ -415,12 +413,19 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{if(e.target.id==='taskfilter'){taskFilter=e.target.value;renderTodo();}});
 $('rescheduleform').addEventListener('submit',e=>{e.preventDefault();const value=e.currentTarget.dataset.value,from=value.slice(0,10),id=value.slice(11),to=$('rescheduledate').value;if(!to)return;st.day[from]=(st.day[from]||[]).filter(x=>x!==id);st.day[to]=[...new Set([...(st.day[to]||[]),id])];cs=to;cm=new Date(to.slice(0,7)+'-01T00:00:00');save();render();$('rescheduledialog').close();});
 
+function renderChapterPace(){
+ const pace=chapterPace(ALL.filter(a=>!studied(a.id)).length,st.syllabusCompletionDate,iso(today()));
+ if(!pace)return '<p class="mute">Set a completion deadline to see how many chapters to study each day and week.</p>';
+ if(!pace.remaining)return '<p class="pace-message">✓ All chapters studied! You can focus on revision and practice.</p>';
+ if(pace.overdue)return `<p class="pace-message">${pace.remaining} chapters still to study. Your deadline has passed; choose a new date to calculate your daily and weekly pace.</p>`;
+ return `<div class="chapter-pace"><div><strong>${pace.daily}</strong><span>chapters per day</span></div><div><strong>${pace.weekly}</strong><span>${pace.weekDays<7?`chapters in the final ${pace.weekDays} ${pace.weekDays===1?'day':'days'}`:'chapters per week'}</span></div></div><p class="mute pace-detail">${pace.remaining} chapters remaining · ${pace.days} study ${pace.days===1?'day':'days'} through ${fmt(st.syllabusCompletionDate)}. Includes today and your deadline.</p><p class="mute pace-detail">Rounded up to whole chapters; the final day or week may need fewer. Recalculates as you mark chapters Studied. Revision and PYQs are separate.</p>`;
+}
 function renderCompletionTarget(){
  const target=st.syllabusCompletionDate,remaining=target?daysBetween(iso(today()),target):0;
  const dateLabel=target?new Date(target+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'Set your syllabus finish date';
  const examLabel=new Date(EXAM+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
  const countdown=remaining<0?`${Math.abs(remaining)} days past target · edit your goal anytime`:remaining===0?'Your target is today':`${remaining} days to your target`;
- $('completiontarget').innerHTML=`<section class="card completion-banner"><span class="metric-icon" aria-hidden="true">◎</span><div class="completion-copy"><div class="eyebrow">Complete syllabus by</div><h2>${dateLabel}</h2><p class="mute">${target?countdown:'Finish before the exam and leave yourself room to revise.'}</p></div><div class="completion-revision"><b>${target?daysBetween(target,EXAM)+' days for revision':'Plan ahead, study calmly'}</b><small>Tentative exam date · ${examLabel}</small></div><button class="btn p" type="button" data-edit-completion>${target?'Edit date':'＋ Set date'}</button></section>`;
+ $('completiontarget').innerHTML=`<section class="card completion-banner"><span class="metric-icon" aria-hidden="true">◎</span><div class="completion-copy"><div class="eyebrow">Complete syllabus by</div><h2>${dateLabel}</h2><p class="mute">${target?countdown:'Finish before the exam and leave yourself room to revise.'}</p></div><div class="completion-revision"><b>${target?daysBetween(target,EXAM)+' days for revision':'Plan ahead, study calmly'}</b><small>Tentative exam date · ${examLabel}</small></div><button class="btn p" type="button" data-edit-completion>${target?'Edit date':'＋ Set date'}</button><div class="completion-pace">${renderChapterPace()}</div></section>`;
 }
 function updateCompletionBuffer(){
  const value=$('completiondate').value;
