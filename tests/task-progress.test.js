@@ -31,7 +31,8 @@ test('daily view renders separate completion dates and an empty selected date', 
   ctx.taskDate='2026-11-01';
   vm.runInNewContext('renderTodo();',ctx);
   assert.match(node.innerHTML,/Completed · 2026-11-01/);
-  assert.match(node.innerHTML,/task-history-calendar/);
+  assert.doesNotMatch(node.innerHTML,/task-history-calendar/);
+  assert.equal((node.innerHTML.match(/data-task-day=/g)||[]).length,7);
   ctx.taskDate='2026-11-05';
   vm.runInNewContext('renderTodo();',ctx);
   assert.match(node.innerHTML,/No tasks for this day/);

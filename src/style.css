@@ -329,8 +329,6 @@ input::placeholder, textarea::placeholder { color: var(--mute); opacity: 1; }
 .chapter-suggestion b{font-size:13px}.chapter-suggestion small{font-size:11px;color:var(--mute);margin-top:4px}
 #taskchapterstatus{display:block;margin-top:5px;font-size:12px}
 .task-date-nav [aria-pressed=true]{background:color-mix(in srgb,var(--ok) 15%,var(--card));border-color:var(--ok);color:var(--ink)}
-.task-history-calendar{padding:16px;border:1px solid var(--line);border-radius:12px;margin-top:16px;max-width:460px;background:var(--card)}
-.task-history-calendar h3{margin:0 0 12px;font-size:17px}.task-history-calendar .mini-month{gap:8px}.task-history-calendar .mini-month button{width:34px;height:34px}.task-history-calendar .mini-month button.outside{opacity:1;color:var(--mute)}
 .task-week[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){.love-particle{display:none}}
 
