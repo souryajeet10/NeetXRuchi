@@ -370,3 +370,5 @@ input::placeholder, textarea::placeholder { color: var(--mute); opacity: 1; }
 .sidebar-icon-todo{--sprite-y:-9.671428571}
 @media(max-width:1200px){.study-sidebar .nav button{gap:10px;padding-left:10px;padding-right:10px}}
 @media(max-width:760px){.study-sidebar .nav button{gap:3px;padding:3px 1px;font-size:10px}.study-sidebar .nav button>.sidebar-icon{--icon-size:29px;border-radius:6px}}
+
+.love-particle-burst{font-size:clamp(42px,5vw,60px)}

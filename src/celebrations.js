@@ -4,7 +4,7 @@ let lastTrail = 0;
 function particle(symbol, x, y, burst) {
   if (document.querySelectorAll('.love-particle').length >= 60) return;
   const node = document.createElement('span');
-  node.className = 'love-particle';
+  node.className = burst ? 'love-particle love-particle-burst' : 'love-particle';
   node.textContent = symbol;
   node.setAttribute('aria-hidden', 'true');
   node.style.left = `${x}px`;
