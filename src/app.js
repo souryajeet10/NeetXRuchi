@@ -1,3 +1,4 @@
+import { setupSmoothScroll } from './smooth-scroll.js';
 import { celebrateCompletion } from './celebrations.js';
 import { setupTaskChapterSearch } from './task-chapter-search.js';
 import { addChapterTask, taskDay, stageProgress } from './task-progress.js';
@@ -470,3 +471,5 @@ $('completionclear').addEventListener('click',()=>{st.syllabusCompletionDate='';
 function renderStageProgress(){
  return '<div class="stage-progress">'+stageProgress(st.done).map(({label,count,percent},i)=>`<section class="card stage-card stage-${i}"><div class="row"><div class="stage-heading"><span class="stage-art stage-art-${i}" aria-hidden="true"><img src="/images/progress-${['studied','revised','pyqs'][i]}.png" alt="" width="1254" height="1254"></span><h2>${label==='PYQs'?'PYQs completed':label}</h2></div><strong>${percent}%</strong></div><div class="bar"><i style="width:${percent}%"></i></div><small class="mute">${count} of ${ALL.length} chapters</small></section>`).join('')+'</div>';
 }
+
+setupSmoothScroll();
