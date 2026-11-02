@@ -256,16 +256,7 @@ const FIREBASE_CONFIG = {
 };
 let sdk=null,auth=null,db=null,user=null,ready=true,dirty=false,saving=false,version=0,saveTimer=null,unsubscribe=null;
 let editRevision=0,authGeneration=0,conflict=false;
-let actionFeedbackTimer;
-function actionFeedback(busy,saved=false){
-  clearTimeout(actionFeedbackTimer);
-  const indicator=$('actionloading');
-  indicator.hidden=!(busy||saved);
-  indicator.classList.toggle('is-saved',saved);
-  $('actionloadingtext').textContent=saved?'Progress saved':'Saving your progress…';
-  if(saved)actionFeedbackTimer=setTimeout(()=>{indicator.hidden=true;},800);
-}
-function status(message,error=false,busy=false,saved=false){actionFeedback(busy&&!error,saved&&!error);$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
+function status(message,error=false,busy=false,saved=false){$('loginconnection').textContent=auth?'':message;$('syncmsg').textContent=message;$('statusbar').classList.toggle('error',error);$('retry').hidden=!(dirty&&!saving);$('cloudreload').hidden=!(user&&(!ready||conflict));}
 function lock(value){$('workspace').inert=value;$('workspace').style.opacity=value?'.45':'';if($('reset'))$('reset').disabled=value;}
 function persistProgress(){
   if(!user||user.isAnonymous)return
