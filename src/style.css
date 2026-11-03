@@ -391,3 +391,6 @@ input::placeholder, textarea::placeholder { color: var(--mute); opacity: 1; }
 :root[data-theme="dark"] input[type="date"]{color-scheme:dark}
 :root[data-theme="light"] input[type="date"]{color-scheme:light}
 input[type="date"]::-webkit-calendar-picker-indicator{opacity:1;cursor:pointer}
+
+#intro-logo .softy-logo.is-assembling{overflow:visible}
+.intro-logo-piece{position:absolute;inset:0;display:block;overflow:hidden;border-radius:inherit;pointer-events:none}

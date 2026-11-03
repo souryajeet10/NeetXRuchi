@@ -14,6 +14,8 @@ function reset() {
   const {screen, logo, copy} = elements();
   screen.hidden = true;
   screen.classList.remove('is-active');
+  logo.classList.remove('is-assembling');
+  logo.querySelectorAll('.intro-logo-piece').forEach(piece => piece.remove());
   gsap.set([screen, logo, copy, ...logo.children], {clearProps:'all'});
   if(destination)destination.style.visibility = '';
   destination = null;
@@ -32,10 +34,41 @@ export function showBrandIntro(title, message) {
   screen.classList.add('is-active');
   timeline = gsap.timeline();
   if(reduced()) return;
-  timeline.fromTo(logo,
-    {opacity:0, scale:.86, y:28, filter:'blur(8px)'},
-    {opacity:1, scale:1, y:0, filter:'blur(0px)', duration:.95, ease:'power3.out', clearProps:'filter,transform'}, 0)
-    .from(copy, {opacity:0, y:10, duration:.35}, .55);
+  const artwork = logo.querySelector('.softy-artwork');
+  // Display regions of the supplied image so the animated lettering is identical
+  // to the final logo, with no replacement font or recreated artwork.
+  const regions = {
+    neet:'inset(38% 50% 39% 27%)',
+    x:'inset(38% 43.5% 39% 50%)',
+    softy:'inset(38% 15% 39% 56.5%)',
+    top:'inset(0 0 62% 0)',
+    bottom:'inset(61% 0 0 0)',
+    left:'inset(38% 73% 39% 0)',
+    right:'inset(38% 0 39% 85%)'
+  };
+  const pieces = {};
+  for(const [name, clip] of Object.entries(regions)) {
+    const piece = document.createElement('span');
+    piece.className = 'intro-logo-piece';
+    piece.setAttribute('aria-hidden', 'true');
+    const image = artwork.cloneNode();
+    image.style.clipPath = clip;
+    piece.append(image);
+    logo.append(piece);
+    pieces[name] = piece;
+  }
+  logo.classList.add('is-assembling');
+  gsap.set(artwork, {opacity:0});
+  timeline.from(pieces.neet, {x:-innerWidth*.65, opacity:0, duration:1, ease:'power3.out'}, 0)
+    .from(pieces.x, {y:innerHeight*.6, opacity:0, duration:1, ease:'back.out(1.2)'}, .12)
+    .from(pieces.softy, {x:innerWidth*.65, opacity:0, duration:1, ease:'power3.out'}, 0)
+    .from([pieces.top,pieces.bottom,pieces.left,pieces.right], {opacity:0, duration:.45}, .8)
+    .from(copy, {opacity:0, y:10, duration:.35}, .9)
+    .set(artwork, {opacity:1}, 1.3)
+    .call(() => {
+      Object.values(pieces).forEach(piece => piece.remove());
+      logo.classList.remove('is-assembling');
+    }, [], 1.3);
 
 }
 
