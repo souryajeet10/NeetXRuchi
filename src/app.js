@@ -300,7 +300,6 @@ async function accountChanged(next){
   authGeneration++;const generation=authGeneration;clearTimeout(saveTimer);unsubscribe?.();unsubscribe=null;user=next;dirty=false;conflict=false;version=0;ready=false;st=fresh();clearTransient();render();
   $('account').textContent='My account';$('signedin').hidden=false;$('accessid').value='';
   if(!next||next.isAnonymous){showLoginPage(true);showLoading(false);$('signin').classList.remove('is-loading');lock(true);status('');authControls(false);return;}
-  showLoading(true,'Opening your study space ♡','Loading your chapters and tests…');
   showLoginPage(false);lock(true);
   try{const profile=await sdk.getDocFromServer(sdk.doc(db,'profiles',next.uid));if(generation!==authGeneration){showLoading(false);return;}
     const p=profile.exists()?profile.data():{};$('accountemail').textContent=(p.name||'Your account')+(p.id?' · '+p.id:'');$('greeting').textContent=p.name?'You’ve got this, '+p.name+'.':'Small steps. A stronger tomorrow.';
@@ -357,7 +356,6 @@ function resetAuthForm(){
 $('signout').onclick=async()=>{
   if(saving){$('authmsg').textContent='Wait for the current save to finish, then sign out.';return}
   if(dirty){await pushCloud();if(dirty){$('authmsg').textContent='Progress is not saved. Retry saving before signing out.';return}}
-  showLoading(true,'Signing out…','Safely closing your session…');
   try{resetAuthForm();await sdk.signOut(auth);$('authdialog').close()}catch(e){$('authmsg').textContent=friendly(e)}
   finally{showLoading(false);}
 };
@@ -373,7 +371,9 @@ function showLoginPage(show){
   else if(user){authMessageParent.insertBefore($('authmsg'),$('signedin'));}
 }
 authControls(true);
-showLoading(true,'Welcome ♡','Getting your study space ready…');
+if(performance.getEntriesByType('navigation')[0]?.type==='reload'){
+  showLoading(true,'Welcome back ♡','Getting your study space ready…');
+}
 showLoginPage(true);
 connectFirebase(FIREBASE_CONFIG).catch(()=>{showLoading(false);$('loginconnection').textContent='Could not connect. Check your internet connection and reload.';authControls(true)});
 
