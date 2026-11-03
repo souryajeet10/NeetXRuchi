@@ -1,7 +1,8 @@
+import { showBrandIntro, finishBrandIntro } from './brand-intro.js';
 import { setupSmoothScroll } from './smooth-scroll.js';
 import { celebrateCompletion } from './celebrations.js';
 import { setupTaskChapterSearch } from './task-chapter-search.js';
-import { addChapterTask, taskDay, stageProgress } from './task-progress.js';
+import { addChapterTask, rescheduleTask, taskDay, stageProgress } from './task-progress.js';
 import { EXAM_DATE, completionTargetError, daysBetween, chapterPace } from './completion-target.js';
 import { initializeApp } from 'firebase/app';
 import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut, connectAuthEmulator } from 'firebase/auth';
@@ -146,7 +147,7 @@ function renderTodo(){
  const completed=tasks.filter(t=>t.done&&t.completedAt===tk).length+studiedToday.length;
  const pending=tasks.filter(t=>!t.done),overdue=pending.filter(t=>t.due&&t.due<tk),todayTasks=pending.filter(t=>!t.due||t.due===tk);
  const filtered=t=>taskFilter==='all'||(taskFilter==='completed'?t.done:taskFilter==='pending'?!t.done:t.priority===taskFilter);
- const row=t=>`<div class="task-row ${t.done?'task-done':''}"><label><input type="checkbox" data-todotoggle="${esc(t.id)}" ${t.done?'checked':''}><span><b>${esc(t.text)}</b><small>${BY[t.chapterId]?esc(S[BY[t.chapterId].s].n+' · '+BY[t.chapterId].c):'No chapter linked (existing task)'}</small></span></label><span class="task-due">▦ ${t.due?fmt(t.due):'No date'}<small>${t.due&&t.due<tk&&!t.done?'Overdue':t.due===tk?'Today':''}</small></span><span class="priority ${t.done?'complete':t.priority||'medium'}">${t.done?'Completed':({high:'↟ High',medium:'↓ Medium',low:'• Low'}[t.priority||'medium'])}</span><button class="text-button delete-task" data-tododel="${esc(t.id)}" aria-label="Delete task: ${esc(t.text)}">×</button></div>`;
+ const row=t=>`<div class="task-row ${t.done?'task-done':''}"><label><input type="checkbox" data-todotoggle="${esc(t.id)}" ${t.done?'checked':''}><span><b>${esc(t.text)}</b><small>${BY[t.chapterId]?esc(S[BY[t.chapterId].s].n+' · '+BY[t.chapterId].c):'No chapter linked (existing task)'}</small></span></label><span class="task-due">▦ ${t.due?fmt(t.due):'No date'}<small>${t.due&&t.due<tk&&!t.done?'Overdue':t.due===tk?'Today':''}</small><button type="button" class="text-button task-reschedule" data-task-reschedule="${esc(t.id)}" aria-label="Reschedule task: ${esc(t.text)}">Reschedule</button></span><span class="priority ${t.done?'complete':t.priority||'medium'}">${t.done?'Completed':({high:'↟ High',medium:'↓ Medium',low:'• Low'}[t.priority||'medium'])}</span><button class="text-button delete-task" data-tododel="${esc(t.id)}" aria-label="Delete task: ${esc(t.text)}">×</button></div>`;
  const group=(name,items)=>{const visible=items.filter(filtered);return visible.length?`<details class="task-group" open><summary>${name}<small>${visible.length} tasks</small></summary>${visible.map(row).join('')}</details>`:''};
  const dayLabel=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+(d===tk?' · Today':''):'No date';
  const dates=[...new Set([taskDate||tk,...tasks.map(taskDay).filter(Boolean)])].sort();
@@ -290,10 +291,9 @@ async function loadCloud(){
     dirty=false;conflict=false;ready=true;clearTransient();render();lock(false);status('Saved to your account · synced across devices');
   }catch(e){if(generation===authGeneration)status('Could not load your account. '+friendly(e),true)}
 }
-function showLoading(show,title='Welcome back ♡',message='Getting your study space ready…'){
-  const el=$('loadingscreen');if(!el)return;
-  if(show){$('loadingtitle').textContent=title;$('loadingstatus').textContent=message;el.removeAttribute('hidden');void el.offsetHeight;el.classList.add('is-active');}
-  else{el.classList.remove('is-active');setTimeout(()=>{if(!el.classList.contains('is-active'))el.setAttribute('hidden','')},260);}
+function showLoading(show,title='Welcome back ♡',message='Getting your study space ready…',dock=false){
+  if(show)showBrandIntro(title,message);
+  else finishBrandIntro(dock);
 }
 async function accountChanged(next){
   if(authBusy)return;
@@ -307,7 +307,7 @@ async function accountChanged(next){
     if(p.name)$('loadingtitle').textContent='Welcome, '+p.name+' ♡';
   }catch{$('accountemail').textContent='Your study account'}
   await loadCloud();
-  showLoading(false);$('signin').classList.remove('is-loading');
+  showLoading(false,undefined,undefined,ready&&generation===authGeneration&&!!user);$('signin').classList.remove('is-loading');
   if(generation!==authGeneration||!user)return;
   unsubscribe=sdk.onSnapshot(sdk.doc(db,'trackers',user.uid),snap=>{
     if(generation!==authGeneration||!ready||dirty||saving||snap.metadata.hasPendingWrites||!snap.exists())return;
@@ -464,3 +464,17 @@ function renderStageProgress(){
 }
 
 setupSmoothScroll();
+
+ document.addEventListener('click',e=>{
+   const button=e.target.closest('[data-task-reschedule]');if(!button)return;
+   const task=st.todos.find(t=>t.id===button.dataset.taskReschedule);if(!task)return;
+   $('taskrescheduleform').dataset.taskId=task.id;
+   $('taskreschedulename').textContent=task.text;
+   $('taskrescheduledate').value=task.due||iso(today());
+   $('taskrescheduledialog').showModal();$('taskrescheduledate').focus();
+ });
+ $('taskrescheduleform').addEventListener('submit',e=>{
+   e.preventDefault();const date=$('taskrescheduledate').value;
+   if(!rescheduleTask(st,e.currentTarget.dataset.taskId,date))return;
+   taskDate=date;taskCalendar=date<iso(today());save();render();$('taskrescheduledialog').close();
+ });

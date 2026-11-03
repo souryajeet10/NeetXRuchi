@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ALL } from '../src/syllabus.js';
 import { fresh, normalize } from '../src/state.js';
-import { addChapterTask, taskDay, stageProgress } from '../src/task-progress.js';
+import { addChapterTask, rescheduleTask, taskDay, stageProgress } from '../src/task-progress.js';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { S, BY } from '../src/syllabus.js';
@@ -67,4 +67,23 @@ test('study, revision and PYQ percentages use independent chapter counts', () =>
   assert.equal(result[1].count,1);
   assert.equal(result[1].percent,Math.round(100/ALL.length));
   assert.equal(result[2].percent,0);
+});
+
+test('rescheduling moves linked plans while preserving shared chapters and study history', () => {
+ const state=fresh(),chapterId=ALL[0].id;
+ addChapterTask(state,{id:'a',text:'Notes',chapterId,due:'2026-11-03'});
+ addChapterTask(state,{id:'b',text:'Practice',chapterId,due:'2026-11-03'});
+ assert.equal(rescheduleTask(state,'a','2026-02-30'),false);
+ assert.equal(rescheduleTask(state,'a','2026-11-04'),true);
+ assert.deepEqual(state.day['2026-11-03'],[chapterId]);
+ assert.deepEqual(state.day['2026-11-04'],[chapterId]);
+ rescheduleTask(state,'b','2026-11-04');
+ assert.deepEqual(state.day['2026-11-03'],[]);
+ assert.deepEqual(state.day['2026-11-04'],[chapterId]);
+ state.dayDone['2026-11-04']=[chapterId];
+ rescheduleTask(state,'a','2026-11-05');
+ rescheduleTask(state,'b','2026-11-05');
+ assert.deepEqual(state.day['2026-11-04'],[chapterId]);
+ assert.deepEqual(state.dayDone['2026-11-04'],[chapterId]);
+ assert.equal(normalize(state).todos[0].due,'2026-11-05');
 });

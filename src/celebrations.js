@@ -32,5 +32,5 @@ export function celebrateCompletion() {
 document.addEventListener('pointermove', event => {
   if (event.pointerType !== 'mouse' || reducedMotion() || performance.now() - lastTrail < 90) return;
   lastTrail = performance.now();
-  particle('💋', event.clientX, event.clientY, false);
+  particle('💕', event.clientX, event.clientY, false);
 }, { passive: true });
