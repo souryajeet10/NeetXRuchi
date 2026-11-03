@@ -14,7 +14,7 @@ function reset() {
   const {screen, logo, copy} = elements();
   screen.hidden = true;
   screen.classList.remove('is-active');
-  gsap.set([screen, logo, copy, ...logo.children, ...logo.querySelectorAll('.softy-wordmark span')], {clearProps:'all'});
+  gsap.set([screen, logo, copy, ...logo.children], {clearProps:'all'});
   if(destination)destination.style.visibility = '';
   destination = null;
   finishing = false;
@@ -32,11 +32,11 @@ export function showBrandIntro(title, message) {
   screen.classList.add('is-active');
   timeline = gsap.timeline();
   if(reduced()) return;
-  timeline.from(logo.querySelector('.logo-neet'), {x:-innerWidth*.6, opacity:0, duration:.85, ease:'power3.out'}, 0)
-    .from(logo.querySelector('.logo-x'), {y:innerHeight*.55, opacity:0, duration:.9, ease:'back.out(1.4)'}, .1)
-    .from(logo.querySelector('.logo-softy'), {x:innerWidth*.6, opacity:0, duration:.85, ease:'power3.out'}, 0)
-    .from(logo.querySelectorAll('.softy-flower,.softy-kiss'), {scale:0, opacity:0, duration:.4, stagger:.1, ease:'back.out(1.8)'}, .65)
-    .from(copy, {opacity:0, y:12, duration:.3}, .8);
+  timeline.fromTo(logo,
+    {opacity:0, scale:.86, y:28, filter:'blur(8px)'},
+    {opacity:1, scale:1, y:0, filter:'blur(0px)', duration:.95, ease:'power3.out', clearProps:'filter,transform'}, 0)
+    .from(copy, {opacity:0, y:10, duration:.35}, .55);
+
 }
 
 export function finishBrandIntro(dock = false) {
@@ -48,14 +48,14 @@ export function finishBrandIntro(dock = false) {
     timeline = gsap.timeline().to(screen, {opacity:0, duration:reduced()?0:.2, onComplete:reset});
     return;
   }
-  // Append to the entrance so a fast sign-in still shows all three words joining.
+  // Let the artwork finish its entrance before moving it into navigation.
   timeline = timeline || gsap.timeline();
   timeline.to({}, {duration:.25}).to(copy, {opacity:0, duration:.2}).add(() => {
     destination = document.querySelector('.sidebar-brand .softy-logo');
     const target = destination?.getBoundingClientRect();
     if(!target?.width || !target.height) {
       // The sidebar brand is intentionally hidden in the mobile bottom navigation.
-      gsap.to(screen, {opacity:0, duration:.25, onComplete:reset});
+      timeline = gsap.timeline().to(screen, {opacity:0, duration:.25, onComplete:reset});
       return;
     }
     const start = logo.getBoundingClientRect();

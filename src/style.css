@@ -373,21 +373,21 @@ input::placeholder, textarea::placeholder { color: var(--mute); opacity: 1; }
 
 .love-particle-burst{font-size:clamp(42px,5vw,60px)}
 
-/* One live wordmark for both the sidebar and the login entrance. */
-.softy-logo{display:flex;align-items:center;justify-content:center;gap:.14em;position:relative;width:100%;padding:.62em .35em .72em;border-radius:12px;background:#fff5f9;color:#65203f;font-size:clamp(16px,1.45vw,22px);font-weight:800;letter-spacing:-.055em;line-height:1;white-space:nowrap;box-sizing:border-box}
-.softy-wordmark{display:inline-flex;position:relative;align-items:baseline}
-.softy-wordmark:after{content:'';position:absolute;left:12%;right:8%;bottom:-.28em;height:.15em;border-top:2px solid #e98ab4;border-radius:50%;transform:rotate(-3deg)}
-.softy-wordmark>span{display:inline-block}
-.softy-flower{color:#b73579;font-size:1.55em;line-height:.8;flex-shrink:0;letter-spacing:0}
-.softy-kiss{font-size:.6em;align-self:flex-end;letter-spacing:0;margin-bottom:-.2em}
+/* Supplied NEETXSOFTY artwork: shared proportions prevent distortion on docking. */
+.softy-logo{display:block;position:relative;width:100%;aspect-ratio:4 / 1;overflow:hidden;border-radius:12px;background:#fff5f9;box-sizing:border-box}
+.softy-artwork{position:absolute;display:block;width:100%;height:auto;max-width:none;left:0;top:-16.7%;pointer-events:none}
+.sidebar-brand .softy-logo{margin:0;padding:0}
 .loading-screen{background:color-mix(in srgb,var(--bg) 95%,transparent);overflow:hidden;transition:none}
 .loading-screen[hidden]{display:none}
-.brand-intro{width:min(620px,calc(100vw - 36px));text-align:center}
+.brand-intro{width:min(660px,calc(100vw - 36px));text-align:center}
 #intro-logo{width:100%;display:flex;justify-content:center}
-#intro-logo .softy-logo{font-size:clamp(27px,6.6vw,62px);border-radius:22px;width:max-content;padding:.6em .45em .7em;box-shadow:0 16px 65px #a82f6915}
+#intro-logo .softy-logo{width:100%;box-shadow:0 18px 65px #a82f6920;transform-origin:center}
 .intro-copy{margin-top:28px;padding:0 16px;color:var(--ink)}
 .intro-copy h3{font-size:20px;margin:0 0 10px}.intro-copy p{font-size:14px;color:var(--mute);line-height:1.6}
-.sidebar-brand .softy-logo{font-size:20px;margin-right:0;padding:16px 8px;color:#65203f}
-@media(max-width:1200px){.sidebar-brand .softy-logo{font-size:16px;padding:14px 6px}}
 
 .task-reschedule{display:block;font-size:11px;margin-top:5px;padding:3px 0;text-decoration:underline;text-underline-offset:3px}
+
+/* Match native date controls to the selected theme so calendar icons stay visible. */
+:root[data-theme="dark"] input[type="date"]{color-scheme:dark}
+:root[data-theme="light"] input[type="date"]{color-scheme:light}
+input[type="date"]::-webkit-calendar-picker-indicator{opacity:1;cursor:pointer}
